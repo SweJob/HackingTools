@@ -14,7 +14,7 @@ import ipaddress
 # import pprint
 import time
 import nmap
-from colorama import Fore, Back, Style
+from colorama import Fore
 from swejob_tools import misc_tools
 
 # Global variables
@@ -55,6 +55,15 @@ def settings_changed(changed):
     global settings_saved
     settings_saved = not changed
 
+def clear_screen():
+    """
+    clears terminal window on both windows and linux
+    """
+    if WINDOWS:
+        os.system('cls')
+    else:
+        os.system('clear')
+
 def set_ip_address():
     """ 
     Get IP address and mask from user
@@ -69,9 +78,9 @@ def set_ip_address():
     # loop until valid adress is entered
     while not valid_ip_addr:
         # Clear previous entry
-        misc_tools.pos_print(25,1," "*80)
+        misc_tools.pos_print(5,43," "*(misc_tools.get_terminal_width()-46))
         # Get input , prompt under status message
-        user_ip_addr = input("\x1b[25;1HEnter IP-address[aaa.bbb.ccc.ddd][/0-32]]: ")
+        user_ip_addr = input("\x1b[5;43HEnter IP-address[aaa.bbb.ccc.ddd][/0-32]]: ")
         #check if entered adress minus any mask provided is valid
         valid_ip_addr = is_valid_ip_address(user_ip_addr.split("/")[0])
     ip_addr_str = user_ip_addr.split("/")[0]
@@ -94,7 +103,7 @@ def set_ip_address():
         set_status_msg("No mask divider('/') provided. The default 32-bit mask will be used")
     print_status_msg(1)
     # Clear input line
-    misc_tools.pos_print(25,1," "*80)
+    misc_tools.pos_print(5,43," "*(misc_tools.get_terminal_width()-46))
 
 def scan_target(ip_address,subnet_mask, scan_flags,output_flags):
     """ Scan target save result in scan_res"""
@@ -144,13 +153,14 @@ def display_scan_result():
     """
     set_status_msg("Printing the result from scan")
     print_status_msg()
+    scan_result =[]
     # Format scan result data to desired output
-    scan_result = [
-        ("The result of the scan of ",ip_addr_str,"/",subnet_mask_str,": ")
-    ]
-    
+    for line in range(50):
+        scan_result.append(("line: ",str(line).rjust(3)))
+
     # Send formated data to ouput window
-    output_window(scan_result)
+    output_window(scan_result, active=True)
+    output_window([("",)],False)
 
 def save_scan_result():
     """ 
@@ -185,28 +195,74 @@ def print_status_msg(delay=0):
     Print value of status_msg below menu
     """
     # print status_msg
-    print(Fore.GREEN)    
-    misc_tools.print_window([("Status: "+status_msg,)],26,1,121,True)
+    print(Fore.GREEN)
+    misc_tools.print_window([("Status: "+status_msg,)],1,1,misc_tools.get_terminal_width(),True)
     print(Fore.RESET)
     time.sleep(delay)
 
-def output_window(output_text:list):
+def output_window(text_list:list,active:bool):
     """ 
-    Prints provided string in output window under status message
+    Prints provided list of tuples of strings in output window under status message
+    If active then scroll with up and down keys, quit with Q
     """
-    print(Fore.LIGHTYELLOW_EX)
-    misc_tools.print_window(output_text,1,42,80,True)
-    print(Fore.RESET)
+    max_height = misc_tools.get_terminal_height()-7
+    max_width = misc_tools.get_terminal_width()-44
+    # If provided text is less then max_height lines long, append blank lines
+    line_count = len(text_list)
+    while line_count < max_height:
+        text_list.append(("",))
+        line_count +=1
 
-def clear_output_window():
-    """ 
-    Clears output window but keeps frame
-    """
-    output_text = []
-    for line in range (21):
-        output_text.append((" ",))
-    output_window(output_text)
-    
+    start_row = 0
+    while True:
+        output_text = text_list[start_row:start_row+max_height:]
+        misc_tools.pos_print(1,1,Fore.LIGHTYELLOW_EX)
+        misc_tools.print_window(output_text,4,42,max_width,True)
+        misc_tools.pos_print(1,1,Fore.RESET)
+        #if it's an active window
+        if active:
+            # Check if at top of text
+            top_of_text = start_row == 0
+            # Check if at end of text
+            end_of_text = start_row+max_height == len(text_list)
+
+            if not top_of_text:
+                #Enable up arrow
+                print(Fore.GREEN)
+                misc_tools.pos_print(5, max_width+43,"^")
+            else:
+                #Disable up arrow
+                print(Fore.RED)
+                misc_tools.pos_print(5, max_width+43,"^")
+
+            if not end_of_text:
+                #Enable up arrow
+                print(Fore.GREEN)
+                misc_tools.pos_print(max_height+4, max_width+43,"V")
+            else:
+                #Disable up arrow
+                print(Fore.RED)
+                misc_tools.pos_print(max_height+4, max_width+43,"V")
+            print(Fore.RESET)
+            set_status_msg("Scroll using up and down arrows. Quit with Q")
+            print_status_msg()
+            nav = misc_tools.get_key()
+            #if an arrow was pressed
+            if nav == "\\xe0":
+                sec_nav = misc_tools.get_key()
+                if sec_nav == "H":
+                    start_row -=1
+                    start_row = max(start_row,0)
+                elif sec_nav =="P":
+                    start_row +=1
+                    start_row =min(start_row, len(text_list)-max_height)
+            elif nav =="Q":
+                break
+
+        else:
+            #if not active window
+            break
+
 def settings_window():
     """ 
     Display the settings swindow
@@ -228,9 +284,16 @@ def settings_window():
         (save_string,)
     ]
     # print the settings window in the upper left corner
-    print(Fore.BLUE)
-    misc_tools.print_window(setting_stats,1,1,40,True)
-    print(Fore.RESET)
+    misc_tools.pos_print(1,1,Fore.BLUE)
+    misc_tools.print_window(setting_stats,4,1,40,True)
+    misc_tools.pos_print(1,1,Fore.RESET)
+
+def end_program():
+    """ 
+    Clears screen and quits to shell
+    """
+    os.system('cls')
+    misc_tools.stop_program()
 
 # Constant with list of tuple containing:
 # Selector, menu item and funcion to run
@@ -244,7 +307,7 @@ MAIN_MENU_LIST = [
         ("7", "Load scan settings from file", load_scan_settings),
         ("8", "Save scan settings to file", save_scan_settings),
         ("9", "Help",display_help),
-        ("0", "Quit program", misc_tools.stop_program)
+        ("0", "Quit program", end_program)
     ]
 
 def main_menu():
@@ -254,16 +317,16 @@ def main_menu():
     set_status_msg("Waiting for input. Select from main menu.")
     print_status_msg()
     # print menu and wait for user selection
-    misc_tools.menu(MAIN_MENU_LIST,5,32,10,1,menu_header="Nmap Tools by SweJob")
+    misc_tools.menu(MAIN_MENU_LIST,5,32,13,1,menu_header="Nmap Tools by SweJob")
 
 def main():
     """ 
     Main program
     """
     # Clear Screen
-    os.system('cls')
-    clear_output_window()
     while True:
+        clear_screen()
+        output_window([("",)],False)
         # Print the settings window upper left corner
         settings_window()
         # Print any recieved status messages at the top, right of setting window

@@ -25,7 +25,7 @@ import os
 import platform
 import sys
 import time
-import keyboard
+from getkey import getkey
 
 def is_windows():
     """ Checks if program is running on a windows system """
@@ -64,7 +64,7 @@ def get_key(mode=0, catch_break=True):
     elif mode == 1:
         # Grab a pressed key in linux environment
         # Not implemented yet
-        key_pressed = keyboard.read_key()
+        key_pressed = getkey.getkey()
 
     elif mode == 2:
         pass
@@ -171,7 +171,7 @@ def menu(menu_items:list[tuple],
         row +=1
 
     # Get the selection
-    selection = get_key()
+    selection = get_key(1,True)
 
     # Compare with list of valid selectors
     if selection in selectors:

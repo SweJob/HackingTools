@@ -55,8 +55,6 @@ def settings_changed(changed):
     global settings_saved
     settings_saved = not changed
 
-
-
 def set_ip_address():
     """ 
     Get IP address and mask from user

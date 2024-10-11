@@ -25,8 +25,7 @@ import os
 import platform
 import sys
 import time
-
-import struct
+import ipaddress
 
 from swejob_tools.getkey import getkey
 
@@ -37,13 +36,11 @@ def is_windows():
     return False
 
 if is_windows():
-    #import exclusive windows 
-    import msvcrt
-    import ctypes
+    #import exclusive windows
+    pass
 else:
     # import exclusive linux
-    import fcntl
-    import termios
+    pass
 
 def clear_screen():
     """
@@ -62,29 +59,14 @@ def is_float(string):
     except ValueError:
         return False
 
-def get_key(mode=0, catch_break=True):
+def get_key(catch_break=True):
     """ 
     Grabs key pressed and returns key as a string
     If not alphabetical or numerical value, escape code is returned,
     ex: \t for tab, \r for return
     Ctrl-C is separatly handled and runs the stop_program() function,
     """
-    if is_windows() or mode==0:
-        key_pressed = ""
-        # Grab a pressed key in windows environment
-        if msvcrt.kbhit:
-            key_val =  str(msvcrt.getch())
-            #remove the "b'\" in the beginning of each string, and the trailing ' in the end
-            key_pressed = key_val[2:].strip("'")
-    elif mode == 1:
-        # Grab a pressed key in linux environment
-        # Not implemented yet
-        key_pressed = getkey.getkey()
-
-    elif mode == 2:
-        pass
-
-
+    key_pressed = getkey.getkey().strip("b'")
     # If catch_break is enabled and Ctrl-C is pressed, stop the program
     if catch_break and key_pressed == "\\x03":
         stop_program()
@@ -206,7 +188,7 @@ def menu(menu_items:list[tuple],
         row +=1
 
     # Get the selection
-    selection = get_key(1,True)
+    selection = get_key(True)
 
     # Compare with list of valid selectors
     if selection in selectors:
@@ -240,6 +222,16 @@ def timer_decorator(func):
         return result, execution_time
     return wrapper
 
+def is_valid_ip_address(ip_string):
+    """ 
+    Return true if a valid ip adress is provided as an argument 
+    """
+    try:
+        ipaddress.ip_address(ip_string)
+        return True
+    except ValueError:
+        return False
+    
 # display a status window printed from a start row and column with a fixed width.
 # each row is a tuple of strings that are concatenated to fit within the width of the status window
 # frame is optional
@@ -272,7 +264,7 @@ def print_window(row_list:list, start_row=1, start_column=1, width=30, frame=Tru
                 #shorten if to long
                 row_string = row_string[:width-1]
             else:
-                # add strailing spaces if to short
+                # add trailing spaces if to short
                 row_string = row_string.ljust(width-1)
             row_string = row_string +"║"
         pos_print(row,column,row_string)

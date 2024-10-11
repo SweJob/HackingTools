@@ -232,7 +232,7 @@ ADDRESS_MENU_LIST =[
         ("1", "Add IP address", add_ip_address),
         ("2", "Remove IP address", remove_ip_address),
         ("3", "Save IP adresses to file", save_ip_addresses),
-        # ("4", "Load IP adresses from file", load_ip_adresses),
+        ("4", "Load IP adresses from file", load_ip_adresses),
         ("0", "Return to main menu", misc_tools.nothing),
         ("Q", "Quit program", end_program)
     ]

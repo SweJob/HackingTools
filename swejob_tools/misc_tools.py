@@ -219,7 +219,7 @@ def menu(menu_items:list[tuple],
         pos_print(row+1,column," "*27)
     return selection
 
-def end_menu():
+def nothing():
     """ Do nothing """
     pass
     

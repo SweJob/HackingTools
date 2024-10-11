@@ -25,7 +25,9 @@ import os
 import platform
 import sys
 import time
-import subprocess
+
+import struct
+
 from swejob_tools.getkey import getkey
 
 def is_windows():
@@ -35,10 +37,13 @@ def is_windows():
     return False
 
 if is_windows():
+    #import exclusive windows 
     import msvcrt
+    import ctypes
 else:
-    # what to import for reading key in linux??? to be implemented
-    pass
+    # import exclusive linux
+    import fcntl
+    import termios
 
 def clear_screen():
     """
@@ -99,11 +104,25 @@ def get_terminal_height():
     terminal_size=os.get_terminal_size()
     return terminal_size.lines
 
-def resize_term(lines,columns):
-    if is_windows():
-        os.system(f"mode con: cols={columns} lines={lines}")
-    else:
-        print(f"\033[8;{lines};{columns}t", end="")
+# def resize_term(lines,columns):
+#     """
+#     This function is no as of yet behaving as desired 
+#     Intention is for it to at runtime alter the size of my terminal window.
+#     """
+#     if is_windows():
+#         # Get handle to the terminal window
+#         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+#         handle = kernel32.GetStdHandle(-11)  # -11 is the code for the STD_OUTPUT_HANDLE
+#         # Set console window size
+#         rect = ctypes.create_string_buffer(22)
+#         ctypes.memmove(rect, struct.pack("HHHH", 0, 0, columns, lines), 8)
+#         kernel32.SetConsoleWindowInfo(handle, True, rect)
+#     else:
+#         # Use ioctl to change the terminal size
+#         fd = os.open(os.ctermid(), os.O_RDWR)
+#         size = struct.pack("HHHH", lines, columns, 0, 0)
+#         fcntl.ioctl(fd, termios.TIOCSWINSZ, size)
+#         os.close(fd)
 
 def pos_print(row=1,column=1,text=""):
     """ Prints text at [row,column] """
@@ -262,22 +281,21 @@ def main():
     """ 
     main function used to test that functions behave as they are supposed to
     """
-    menu_items =[
-        ("1","Testar 1",print),
-        ("2","Testar 2",pos_print),
-        ("3","Testar 3",is_windows),
-        ("Q","Quit", stop_program)
-    ]
-    resize_term(40,90)
-    while True:
-        os.system('cls')
-        get_terminal_width()
-        menu(menu_items,
-            selector_width=4,
-            text_width=15,
-            start_row=2,
-            start_column=1,
-            menu_header="Testmenu")
+    # menu_items =[
+    #     ("1","Testar 1",print),
+    #     ("2","Testar 2",pos_print),
+    #     ("3","Testar 3",is_windows),
+    #     ("Q","Quit", stop_program)
+    # ]
+    
+    # while True:
+    #     os.system('cls')
+    #     menu(menu_items,
+    #         selector_width=4,
+    #         text_width=15,
+    #         start_row=2,
+    #         start_column=1,
+    #         menu_header="Testmenu")
 
 if __name__ == "__main__":
     main()

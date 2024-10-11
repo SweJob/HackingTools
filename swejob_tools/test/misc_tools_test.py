@@ -13,7 +13,7 @@ def test_get_key():
 def test_resize_terminal():
     print(f"Rows: {misc_tools.get_terminal_height()}")
     print(f"Columns: {misc_tools.get_terminal_width()}")
-    misc_tools.resize_terminal(40,100)
+    misc_tools.resize_term(40,100)
     print(f"Rows: {misc_tools.get_terminal_height()}")
     print(f"Columns: {misc_tools.get_terminal_width()}")
     input("Press enter to continue")

@@ -25,7 +25,8 @@ import os
 import platform
 import sys
 import time
-from getkey import getkey
+import subprocess
+from swejob_tools.getkey import getkey
 
 def is_windows():
     """ Checks if program is running on a windows system """
@@ -99,12 +100,10 @@ def get_terminal_height():
     return terminal_size.lines
 
 def resize_term(lines,columns):
-    print(f"Rows: {get_terminal_height()}")
-    print(f"Columns: {get_terminal_width()}")          
-    sys.stdout.write("\x1b[8;{rows};{cols}t".format(rows=lines, cols=columns))
-    print(f"Rows: {get_terminal_height()}")
-    print(f"Columns: {get_terminal_width()}")
-    input("Press enter to continue")
+    if is_windows():
+        os.system(f"mode con: cols={columns} lines={lines}")
+    else:
+        print(f"\033[8;{lines};{columns}t", end="")
 
 def pos_print(row=1,column=1,text=""):
     """ Prints text at [row,column] """

@@ -217,7 +217,12 @@ def menu(menu_items:list[tuple],
         input("Press Enter to continue")
         pos_print(row,column, " "*27)
         pos_print(row+1,column," "*27)
+    return selection
 
+def end_menu():
+    """ Do nothing """
+    pass
+    
 # function to stop program execution
 def stop_program():
     """ Terminates running python code """

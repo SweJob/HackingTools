@@ -78,7 +78,7 @@ def ip_address_menu():
         # ("3", "Remove IP address", remove_ip_address),
         # ("4", "Save IP adresses to file", save_ip_addresses),
         # ("5", "Load IP adresses from file", load_ip_adresses),
-        ("0", "Return to main menu", misc_tools.end_menu)
+        ("0", "Return to main menu", misc_tools.nothing)
     ]
     selection = ""
     while selection != "0":
@@ -95,7 +95,7 @@ MAIN_MENU_LIST = [
         # ("5", "Save scan settings to file", save_scan_settings),
         # ("6", "Load scan settings from file", load_scan_settings),
         # ("7", "Help",display_help),
-        ("Q", "Quit program", misc_tools.end_menu),
+        ("Q", "Quit program", misc_tools.nothing),
         # ("R", "Refresh sreen", misc_tools.clear_screen),
     ]
 

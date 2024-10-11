@@ -65,19 +65,40 @@ def end_program():
     misc_tools.clear_screen()
     misc_tools.stop_program()
 
+def ip_address_menu():
+    """ 
+    Display a menu for IP address handling
+    """    
+    misc_tools.clear_screen()
+    set_status_msg("Waiting for input. Select from IP address menu")
+    print_status_msg()
+    ADDRESS_MENU_LIST =[
+        # ("1", "List IP adresses", display_ip_adresses),
+        # ("2", "Add IP address", add_ip_address),
+        # ("3", "Remove IP address", remove_ip_address),
+        # ("4", "Save IP adresses to file", save_ip_addresses),
+        # ("5", "Load IP adresses from file", load_ip_adresses),
+        ("0", "Return to main menu", misc_tools.end_menu)
+    ]
+    selection = ""
+    while selection != "0":
+        selection = misc_tools.menu(ADDRESS_MENU_LIST,5,32,4,1,menu_header="IP address menu")
+    
 # Constant with list of tuple containing:
 # Selector, menu item and funcion to run
+# Lines commented out are yet to be implemented
 MAIN_MENU_LIST = [
-        # ("1", "IP address(es)...", ip_address_menu),
+        ("1", "IP address(es)...", ip_address_menu),
         # ("2", "Arguments and flags...", args_menu),
         # ("3", "Scan", scan_menu),
         # ("4", "Scan result...", display_scan_result),
         # ("5", "Save scan settings to file", save_scan_settings),
         # ("6", "Load scan settings from file", load_scan_settings),
         # ("7", "Help",display_help),
-        ("Q", "Quit program", end_program),
+        ("Q", "Quit program", misc_tools.end_menu),
         # ("R", "Refresh sreen", misc_tools.clear_screen),
     ]
+
 def main_menu():
     """ 
     Print main menu and handle response
@@ -85,17 +106,19 @@ def main_menu():
     set_status_msg("Waiting for input. Select from main menu.")
     print_status_msg()
     # print menu and wait for user selection
-    misc_tools.menu(MAIN_MENU_LIST,5,32,5,1,menu_header="Laboration 1 by SweJob")
+    result = misc_tools.menu(MAIN_MENU_LIST,5,32,4,1,menu_header="Laboration 1 by SweJob")
+    return result
 
 def main():
     """
     Laboration 1
     """
     misc_tools.clear_screen()
-    while True:
+    menu_selection = ""
+    while menu_selection != "Q":
         print_status_msg()
-        main_menu()
-
+        menu_selection = main_menu()
+    end_program()
 # If this module is run directly, run the main function
 if __name__ == "__main__":
     main()

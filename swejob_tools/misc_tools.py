@@ -39,6 +39,15 @@ else:
     # what to import for reading key in linux??? to be implemented
     pass
 
+def clear_screen():
+    """
+    clears terminal window on both windows and linux
+    """
+    if is_windows():
+        os.system('cls')
+    else:
+        os.system('clear')
+
 def is_float(string):
     """ Tests if the provided string is a float value """
     try:
@@ -88,6 +97,14 @@ def get_terminal_height():
     """
     terminal_size=os.get_terminal_size()
     return terminal_size.lines
+
+def resize_term(lines,columns):
+    print(f"Rows: {get_terminal_height()}")
+    print(f"Columns: {get_terminal_width()}")          
+    sys.stdout.write("\x1b[8;{rows};{cols}t".format(rows=lines, cols=columns))
+    print(f"Rows: {get_terminal_height()}")
+    print(f"Columns: {get_terminal_width()}")
+    input("Press enter to continue")
 
 def pos_print(row=1,column=1,text=""):
     """ Prints text at [row,column] """
@@ -252,6 +269,7 @@ def main():
         ("3","Testar 3",is_windows),
         ("Q","Quit", stop_program)
     ]
+    resize_term(40,90)
     while True:
         os.system('cls')
         get_terminal_width()

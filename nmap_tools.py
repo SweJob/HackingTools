@@ -55,14 +55,7 @@ def settings_changed(changed):
     global settings_saved
     settings_saved = not changed
 
-def clear_screen():
-    """
-    clears terminal window on both windows and linux
-    """
-    if WINDOWS:
-        os.system('cls')
-    else:
-        os.system('clear')
+
 
 def set_ip_address():
     """ 
@@ -292,7 +285,7 @@ def end_program():
     """ 
     Clears screen and quits to shell
     """
-    os.system('cls')
+    misc_tools.clear_screen()
     misc_tools.stop_program()
 
 # Constant with list of tuple containing:
@@ -307,7 +300,8 @@ MAIN_MENU_LIST = [
         ("7", "Load scan settings from file", load_scan_settings),
         ("8", "Save scan settings to file", save_scan_settings),
         ("9", "Help",display_help),
-        ("0", "Quit program", end_program)
+        ("0", "Quit program", end_program),
+        ("R", "Refresh sreen", misc_tools.clear_screen),
     ]
 
 def main_menu():
@@ -325,7 +319,7 @@ def main():
     """
     # Clear Screen
     while True:
-        clear_screen()
+        misc_tools.clear_screen()
         output_window([("",)],False)
         # Print the settings window upper left corner
         settings_window()

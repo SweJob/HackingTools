@@ -8,7 +8,7 @@ from .unikeys import UnicodeAsciiKeys
 # These are used for the names of ctrl keys, etc.
 ASCII_NAMES = {
     '\t': 'tab',
-
+    
     ' ': 'space',          # 0x20
     '!': 'exclamation',    # 0x21
     '"': 'double quote',   # 0x22

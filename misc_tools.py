@@ -25,7 +25,9 @@ import os
 import platform
 import sys
 import time
-from getkey import getkey
+import ipaddress
+
+from swejob_tools.getkey import getkey
 
 def is_windows():
     """ Checks if program is running on a windows system """
@@ -34,10 +36,20 @@ def is_windows():
     return False
 
 if is_windows():
-    import msvcrt
-else:
-    # what to import for reading key in linux??? to be implemented
+    #import exclusive windows
     pass
+else:
+    # import exclusive linux
+    pass
+
+def clear_screen():
+    """
+    clears terminal window on both windows and linux
+    """
+    if is_windows():
+        os.system('cls')
+    else:
+        os.system('clear')
 
 def is_float(string):
     """ Tests if the provided string is a float value """
@@ -47,29 +59,14 @@ def is_float(string):
     except ValueError:
         return False
 
-def get_key(mode=0, catch_break=True):
+def get_key(catch_break=True):
     """ 
     Grabs key pressed and returns key as a string
     If not alphabetical or numerical value, escape code is returned,
     ex: \t for tab, \r for return
     Ctrl-C is separatly handled and runs the stop_program() function,
     """
-    if is_windows() or mode==0:
-        key_pressed = ""
-        # Grab a pressed key in windows environment
-        if msvcrt.kbhit:
-            key_val =  str(msvcrt.getch())
-            #remove the "b'\" in the beginning of each string, and the trailing ' in the end
-            key_pressed = key_val[2:].strip("'")
-    elif mode == 1:
-        # Grab a pressed key in linux environment
-        # Not implemented yet
-        key_pressed = getkey.getkey()
-
-    elif mode == 2:
-        pass
-
-
+    key_pressed = getkey.getkey().strip("b'")
     # If catch_break is enabled and Ctrl-C is pressed, stop the program
     if catch_break and key_pressed == "\\x03":
         stop_program()
@@ -88,6 +85,26 @@ def get_terminal_height():
     """
     terminal_size=os.get_terminal_size()
     return terminal_size.lines
+
+# def resize_term(lines,columns):
+#     """
+#     This function is no as of yet behaving as desired 
+#     Intention is for it to at runtime alter the size of my terminal window.
+#     """
+#     if is_windows():
+#         # Get handle to the terminal window
+#         kernel32 = ctypes.WinDLL('kernel32', use_last_error=True)
+#         handle = kernel32.GetStdHandle(-11)  # -11 is the code for the STD_OUTPUT_HANDLE
+#         # Set console window size
+#         rect = ctypes.create_string_buffer(22)
+#         ctypes.memmove(rect, struct.pack("HHHH", 0, 0, columns, lines), 8)
+#         kernel32.SetConsoleWindowInfo(handle, True, rect)
+#     else:
+#         # Use ioctl to change the terminal size
+#         fd = os.open(os.ctermid(), os.O_RDWR)
+#         size = struct.pack("HHHH", lines, columns, 0, 0)
+#         fcntl.ioctl(fd, termios.TIOCSWINSZ, size)
+#         os.close(fd)
 
 def pos_print(row=1,column=1,text=""):
     """ Prints text at [row,column] """
@@ -171,7 +188,7 @@ def menu(menu_items:list[tuple],
         row +=1
 
     # Get the selection
-    selection = get_key(1,True)
+    selection = get_key(True)
 
     # Compare with list of valid selectors
     if selection in selectors:
@@ -182,7 +199,12 @@ def menu(menu_items:list[tuple],
         input("Press Enter to continue")
         pos_print(row,column, " "*27)
         pos_print(row+1,column," "*27)
+    return selection
 
+def nothing():
+    """ Do nothing """
+    pass
+    
 # function to stop program execution
 def stop_program():
     """ Terminates running python code """
@@ -200,6 +222,16 @@ def timer_decorator(func):
         return result, execution_time
     return wrapper
 
+def is_valid_ip_address(ip_string):
+    """ 
+    Return true if a valid ip adress is provided as an argument 
+    """
+    try:
+        ipaddress.ip_address(ip_string)
+        return True
+    except ValueError:
+        return False
+    
 # display a status window printed from a start row and column with a fixed width.
 # each row is a tuple of strings that are concatenated to fit within the width of the status window
 # frame is optional
@@ -232,7 +264,7 @@ def print_window(row_list:list, start_row=1, start_column=1, width=30, frame=Tru
                 #shorten if to long
                 row_string = row_string[:width-1]
             else:
-                # add strailing spaces if to short
+                # add trailing spaces if to short
                 row_string = row_string.ljust(width-1)
             row_string = row_string +"║"
         pos_print(row,column,row_string)
@@ -246,21 +278,21 @@ def main():
     """ 
     main function used to test that functions behave as they are supposed to
     """
-    menu_items =[
-        ("1","Testar 1",print),
-        ("2","Testar 2",pos_print),
-        ("3","Testar 3",is_windows),
-        ("Q","Quit", stop_program)
-    ]
-    while True:
-        os.system('cls')
-        get_terminal_width()
-        menu(menu_items,
-            selector_width=4,
-            text_width=15,
-            start_row=2,
-            start_column=1,
-            menu_header="Testmenu")
+    # menu_items =[
+    #     ("1","Testar 1",print),
+    #     ("2","Testar 2",pos_print),
+    #     ("3","Testar 3",is_windows),
+    #     ("Q","Quit", stop_program)
+    # ]
+    
+    # while True:
+    #     os.system('cls')
+    #     menu(menu_items,
+    #         selector_width=4,
+    #         text_width=15,
+    #         start_row=2,
+    #         start_column=1,
+    #         menu_header="Testmenu")
 
 if __name__ == "__main__":
     main()

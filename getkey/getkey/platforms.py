@@ -37,7 +37,7 @@ class Platform(object):
     def getkey(self, blocking=True):
         buffer = ''
         for c in self.getchars(blocking):
-            buffer += c
+            buffer += str(c)
             if buffer not in self.keys.escapes:
                 break
 
@@ -235,5 +235,4 @@ def platform(name=None, keys=None, interrupts=None):
             return ctor(keys=keys, interrupts=interrupts)
     else:
         raise NotImplementedError('Unknown platform {!r}'.format(name))
-
 

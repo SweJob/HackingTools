@@ -19,9 +19,11 @@ __version__ = "0.1"
 __author__ = "Jonas Bergstedt"
 import time
 # import nmap
-from colorama import Fore
+from pathlib import Path
+from pathvalidate import ValidationError, validate_filename
+from colorama import Fore,Style,Back
 from swejob_tools import misc_tools
-# defining some constants to be used
+# Constants
 MENU_WIDTH = 38
 
 MAIN_MENU_START_ROW = 4
@@ -34,14 +36,34 @@ ADDRESS_COLOR = Fore.MAGENTA
 
 STATUS_MSG_START_ROW = 1
 STATUS_MSG_START_COL = 1
+STATUS_MSG_MAX_WIDTH = 140
 STATUS_MSG_COLOR = Fore.GREEN
 
 OUTPUT_WINDOW_COLOR = Fore.YELLOW
 
+IP_ADR_LIST_START_ROW = 4
+IP_ADR_LIST_START_COL = 41
+IP_ADR_LIST_MAX_HEIGHT= 30
+IP_ADR_LIST_MAX_WIDTH = 100
+
+IP_ADR_INPUT_START_ROW = 4
+IP_ADR_INPUT_START_COL = 1
+IP_ADR_INPUT_MAX_HEIGHT = 3
+IP_ADR_INPUT_MAX_WIDTH = STATUS_MSG_MAX_WIDTH
+
+FILE_INPUT_START_ROW =  4
+FILE_INPUT_START_COL = 41
+FILE_INPUT_MAX_HEIGHT = 3
+FILE_INPUT_MAX_WIDTH = 100
+
+FILE_LIST_START_ROW = 7
+FILE_LIST_START_COL = 41
+FILE_LIST_MAX_HEIGHT= 10
+FILE_LIST_MAX_WIDTH = 100
+
 IP_FILE_EXT = ".ipfile"
 
-
-# defining some global variables
+# Global variables
 _ip_addresses = {"127.0.0.1/32"}
 _status_msg = "Ready"
 
@@ -65,7 +87,8 @@ def print_status_msg(delay :int = 0):
         [("Status: "+_status_msg,)],
         STATUS_MSG_START_ROW,
         STATUS_MSG_START_COL,
-        misc_tools.get_terminal_width()-2,True)
+        min(STATUS_MSG_MAX_WIDTH,misc_tools.get_terminal_width()-2),
+        True)
 
     print(Fore.RESET)
     time.sleep(delay)
@@ -77,73 +100,117 @@ def end_program():
     misc_tools.clear_screen()
     misc_tools.stop_program()
 
-def output_window(text_list:list,active:bool):
+def output_window(
+    text_list:list,
+    start_row:int,
+    start_col: int,
+    height: int,
+    width: int,
+    active:bool = False,
+    select_list:bool = False):
     """ 
     Prints provided list of tuples of strings in output window under status message
-    If active then scroll with up and down keys, quit with Q
+    If active then scroll with pgup and pgdown keys, quit with Q
+    If select_list, automatically active and select line within displayed part of list 
+    with arrow up/downs. Enter to confirm selction. returns selected items id from text_list
     """
-    max_height = misc_tools.get_terminal_height()-7
-    max_width = misc_tools.get_terminal_width()-MENU_WIDTH-5
-    # If provided text is less then max_height lines long, append blank lines
-    line_count = len(text_list)
+    max_height = min(height, misc_tools.get_terminal_height() -start_row-2)
+    max_width = min(width,misc_tools.get_terminal_width()-start_col-2)
+    # If provided text (+ 2 for the frame) is less then max_height lines long, append blank lines
+    line_count = len(text_list) + 2
     while line_count < max_height:
         text_list.append(("",))
         line_count +=1
 
-    start_row = 0
+    row_counter = 0
+    selected_line = 0
     while True:
-        output_text = text_list[start_row:start_row+max_height:]
+        output_text = text_list[row_counter:row_counter+max_height-2:]
         misc_tools.pos_print(1,1,OUTPUT_WINDOW_COLOR)
-        misc_tools.print_window(output_text,4,42,max_width,True)
+        misc_tools.print_window(output_text,start_row,start_col,max_width,True)
         misc_tools.pos_print(1,1,Fore.RESET)
         #if it's an active window
-        if active and len(text_list) > max_height:
+        if select_list or (active and len(text_list)>(max_height-2)):
             # Check if at top of text
-            top_of_text = start_row == 0
+            top_of_text = row_counter == 0
             # Check if at end of text
-            end_of_text = start_row+max_height == len(text_list)
+            end_of_text = row_counter + max_height-2 == len(text_list)
+            # print selector
+            misc_tools.pos_print(1,1,Fore.BLACK+Back.WHITE+Style.BRIGHT)
+            misc_tools.pos_print(start_row+1+selected_line, start_col+max_width-5,"<--")
+            misc_tools.pos_print(1,1,Fore.RESET+Back.RESET+Style.RESET_ALL)
 
             if not top_of_text:
                 #Enable up arrow
-                misc_tools.pos_print(5,max_width+43,Fore.GREEN+"^")
+                misc_tools.pos_print(start_row+1, max_width+42, Fore.GREEN + "^")
             else:
                 #Disable up arrow
-                misc_tools.pos_print(5,max_width+43,Fore.RED+"^")
+                misc_tools.pos_print(start_row+1, max_width+42, Fore.RED + "^")
 
             if not end_of_text:
                 #Enable up arrow
-                misc_tools.pos_print(max_height+4, max_width+43,Fore.GREEN+"V")
+                misc_tools.pos_print(start_row+max_height-2, start_col+max_width+1, Fore.GREEN+"V")
             else:
                 #Disable up arrow
-                misc_tools.pos_print(max_height+4, max_width+43,Fore.RED+"V")
+                misc_tools.pos_print(start_row+max_height-2, start_col+max_width+1, Fore.RED+"V")
             print(Fore.RESET)
-            set_status_msg("Scroll using up and down arrows. Quit with Q")
+            msg = "Move selector with up/down arrow."
+            if select_list:
+                msg = msg + " . Select With Enter."
+            msg = msg + " Any other key to quit!"
+            set_status_msg(msg)
             print_status_msg()
             nav = misc_tools.get_key(False)
-            #if an arrow was pressed
             if nav == "\\xe0":
                 sec_nav = misc_tools.get_key(False)
-                if sec_nav == "H":
-                    start_row -=1
-                    start_row = max(start_row,0)
-                elif sec_nav =="P":
-                    start_row +=1
-                    start_row =min(start_row, len(text_list)-max_height)
-            elif nav =="Q":
-                break
+                # set_status_msg(f"{nav} + {sec_nav} was pressed")
+                # print_status_msg(1)
+                if sec_nav == "H" and select_list:
+                    # arrow up
+                    if selected_line == 0:
+                        # at top of window
+                        row_counter -=1
+                        row_counter = max(row_counter,0)
+                    else:
+                        # move up in window
+                        selected_line -=1
+                        selected_line = max(selected_line,0)
+
+                elif sec_nav == "P" and select_list:
+                    # arrow down
+                    if selected_line > max_height-4:
+                        # at bottom of window
+                        row_counter +=1
+                        row_counter =min(row_counter, len(text_list)-(max_height-2))
+                    else:
+                        # move down in window
+                        selected_line +=1
+                        selected_line = min(selected_line,(max_height-3))
+            elif nav =="\\r" and select_list:
+                # Enter
+                return row_counter+selected_line
+            else:
+                return None
 
         else:
             #if not active window
-            break
+            return None
 
 def display_ip_addresses():
     """ 
     Displays the list of IP Addresses
     """
     ip_address_list =[]
-    for ip_address in _ip_addresses:
-        ip_address_list.append((ip_address.ljust(17),))
-    output_window(ip_address_list,True)
+    for ip_address in sorted(_ip_addresses):
+        ip_address_list.append((ip_address.strip(),))
+    output_window(
+        ip_address_list,
+        IP_ADR_LIST_START_ROW,
+        IP_ADR_LIST_START_COL,
+        IP_ADR_LIST_MAX_HEIGHT,
+        IP_ADR_LIST_MAX_WIDTH,
+        True,
+        False)
 
 def input_ip_address():
     """ 
@@ -152,16 +219,21 @@ def input_ip_address():
     """
     valid_ip_addr = False
     valid_mask = False
-    output_window(
-        ["Enter IP address and [optional] mask [aaa.bbb.ccc.ddd][/0-32]."],
-        False)
+    misc_tools.clear_screen()
+    set_status_msg("Enter IP address and [optional] mask [aaa.bbb.ccc.ddd][/0-32].")
     # loop until valid adress is entered
     while not (valid_ip_addr and valid_mask):
         print_status_msg()
-        # Clear previous entry
-        misc_tools.pos_print(6,43," "*(misc_tools.get_terminal_width()-46))
         # Get input , prompt under status message
-        user_ip_addr = input("\x1b[6;43HIP-address[/mask]: ")
+        output_window(
+            [tuple()],
+            IP_ADR_INPUT_START_ROW,
+            IP_ADR_INPUT_START_COL,
+            IP_ADR_INPUT_MAX_HEIGHT,
+            IP_ADR_INPUT_MAX_WIDTH,
+            False, False)
+        user_ip_addr = input(
+            f"\x1b[{IP_ADR_INPUT_START_ROW+1};{IP_ADR_INPUT_START_COL+1}HIP-address[/mask]: ")
         #check if entered adress minus any mask provided is valid
         valid_ip_addr = misc_tools.is_valid_ip_address(user_ip_addr.split("/")[0])
         if not valid_ip_addr:
@@ -184,9 +256,8 @@ def input_ip_address():
             subnet_mask_str = "32"
             user_ip_addr = user_ip_addr.split("/")[0] + "/32"
             valid_mask = True
-            
+
     # Clear input line
-    misc_tools.pos_print(5,43," "*(misc_tools.get_terminal_width()-MENU_WIDTH-6))
     misc_tools.pos_print(6,43," "*(misc_tools.get_terminal_width()-MENU_WIDTH-6))
     return user_ip_addr
 
@@ -195,12 +266,16 @@ def add_ip_address():
     Get IP address and mask from user
     Setting global variables to valid ip_string and mask
     """
+    misc_tools.clear_screen()
     set_status_msg("Enter IP adress to add")
     print_status_msg()
     _ip_addresses.add(input_ip_address())
     display_ip_addresses()
 
 def remove_ip_address():
+    """ 
+    Delete IP adress from list
+    """
     set_status_msg("Enter IP adress to remove")
     print_status_msg()
     # Add a check if IP address in the list or not
@@ -211,15 +286,131 @@ def remove_ip_address():
         print_status_msg()
     display_ip_addresses()
 
+def list_files(directory: str = ".", file_name: str = "*", extension: str =".*"):
+    """ 
+    create and return a list of files with the extension provided or all files
+    """
+    my_dir = Path(directory +"/")
+    search_for = file_name+extension
+    file_list = sorted(my_dir.glob(search_for))
+    return file_list
+
+def file_exists(file_path__name: str):
+    """
+    Return true if file exists
+    """
+    checked_file = Path(file_path__name).is_file()
+    return checked_file
+
+def display_file_list(
+    extension: str,
+    selectable: bool = False,
+    start_row=FILE_LIST_START_ROW,
+    start_col=FILE_LIST_START_COL):
+    """
+    Show a list of files in current directory
+    Select file with arrow keys and enter
+    Tab to enter a filename instead    
+    """
+    set_status_msg(f"List of existing files with the extension '{extension}")
+    print_status_msg()
+    ipfile_list = list_files(extension=extension)
+    # create a list of tuple of strings to be used in the file_list_window
+    display_list = []
+    for file_obj in ipfile_list:
+        file_name = file_obj.name
+        display_list.append((file_name.ljust(20),))
+    selected_file = output_window(
+        display_list,
+        start_row,
+        start_col,
+        FILE_LIST_MAX_HEIGHT,
+        FILE_LIST_MAX_WIDTH,
+        False,
+        selectable)
+    if selectable and not selected_file is None:
+        file_name = display_list[selected_file][0]
+        return file_name
+    return None
+
+def get_file_name():
+    """
+    Return a filename entered by user
+    """
+    # Get input , prompt under status message
+    output_window(
+        [tuple()],
+        IP_ADR_INPUT_START_ROW,
+        IP_ADR_INPUT_START_COL,
+        IP_ADR_INPUT_MAX_HEIGHT,
+        IP_ADR_INPUT_MAX_WIDTH,
+        False, False)
+    file_name = input(f"\x1b[{IP_ADR_INPUT_START_ROW+1};{IP_ADR_INPUT_START_COL+1}HFilename: ")
+    return file_name
+
+def is_valid_file_name(file_name:str):
+    """ 
+    Checks if argument is a valid filename to use
+    """
+    try:
+        validate_filename(file_name)
+    except ValidationError:
+        return False
+    return True
+
 def save_ip_addresses():
     """ 
-    Save the list of IP adressess in a file
+    Save the list of IP adressess in a file in the current directory
     """
+    misc_tools.clear_screen()
     # List files with .ipfile - extension
-    # Get file name from user
-    # Check if file exists. Overwrite?
-    # Write file
-    
+    display_file_list(f"{IP_FILE_EXT}")
+    # Enter a filename to save the settings to
+    set_status_msg("Enter filename to save IP-addresses to ('.ipfile' will be the extension)")
+    print_status_msg()
+    valid_filename = False
+    # Check if entered text is a valid filename
+    while not valid_filename:
+        file_name = get_file_name() + IP_FILE_EXT
+        valid_filename = is_valid_file_name(file_name)
+        if not valid_filename:
+            set_status_msg(f"'{file_name}' is not a valid filename. Try again.")
+
+    # Check if file already exists
+    if file_exists(file_name):
+        set_status_msg(f"'{file_name}' already exists. Press Y to overwrite, other key to cancel")
+        print_status_msg()
+        answer = misc_tools.get_key()
+        if answer != "Y":
+            set_status_msg("Cancelling saving IP-addresses to file")
+            print_status_msg(1)
+            return
+
+    # Try writing to file
+    set_status_msg(f"Writing IP-addresses to '{file_name}'")
+    print_status_msg()
+    try:
+        with open(file_name,'w') as ip_file:
+            for address in _ip_addresses:
+                ip_file.write(address+'\n')
+    except:
+        set_status_msg(f"Something went wrong writing IP-addresses to '{file_name}'")
+    print_status_msg(1)
+
+def load_ip_file(file_name):
+    """ 
+    Load IP-adresses from a .ipfile to global variable _ip_adresses
+    """
+    try:
+        with open(file_name, 'r') as ip_file:
+            local_address_set =set([])
+            for line in ip_file:
+                local_address_set.add(line)
+            global _ip_addresses
+            _ip_addresses = local_address_set
+    except:
+        set_status_msg(f"Something went wrong when reading from {file_name}")
+
 def load_ip_addresses():
     """ 
     Load list of IP adressess from a file
@@ -227,12 +418,22 @@ def load_ip_addresses():
     # List files with .ipfile - extension
     # Let user select
     # Read file
-    
+    misc_tools.clear_screen()
+    set_status_msg("Select file to load IP-addresses from")
+    print_status_msg()
+    selected_file = display_file_list(
+                        extension=IP_FILE_EXT,
+                        selectable=True,
+                        start_row=4,
+                        start_col=1)
+    if not selected_file is None:
+        load_ip_file(selected_file)
+
 ADDRESS_MENU_LIST =[
         ("1", "Add IP address", add_ip_address),
         ("2", "Remove IP address", remove_ip_address),
         ("3", "Save IP adresses to file", save_ip_addresses),
-        ("4", "Load IP adresses from file", load_ip_adresses),
+        ("4", "Load IP adresses from file", load_ip_addresses),
         ("0", "Return to main menu", misc_tools.nothing),
         ("Q", "Quit program", end_program)
     ]
@@ -241,9 +442,9 @@ def ip_address_menu():
     """ 
     Display a menu for IP address handling
     """
-    misc_tools.clear_screen()
     selection = ""
     while selection != "0":
+        misc_tools.clear_screen()
         display_ip_addresses()
         set_status_msg("Waiting for input. Select from IP address menu")
         print_status_msg()

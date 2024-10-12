@@ -51,6 +51,15 @@ def clear_screen():
     else:
         os.system('clear')
 
+def clear_screen():
+    """
+    clears terminal window on both windows and linux
+    """
+    if is_windows():
+        os.system('cls')
+    else:
+        os.system('clear')
+
 def is_float(string):
     """ Tests if the provided string is a float value """
     try:
@@ -85,6 +94,7 @@ def get_terminal_height():
     """
     terminal_size=os.get_terminal_size()
     return terminal_size.lines
+
 
 # def resize_term(lines,columns):
 #     """
@@ -278,6 +288,24 @@ def main():
     """ 
     main function used to test that functions behave as they are supposed to
     """
+<<<<<<< HEAD
+    menu_items =[
+        ("1","Testar 1",print),
+        ("2","Testar 2",pos_print),
+        ("3","Testar 3",is_windows),
+        ("Q","Quit", stop_program)
+    ]
+    resize_term(40,90)
+    while True:
+        os.system('cls')
+        get_terminal_width()
+        menu(menu_items,
+            selector_width=4,
+            text_width=15,
+            start_row=2,
+            start_column=1,
+            menu_header="Testmenu")
+=======
     # menu_items =[
     #     ("1","Testar 1",print),
     #     ("2","Testar 2",pos_print),
@@ -293,6 +321,7 @@ def main():
     #         start_row=2,
     #         start_column=1,
     #         menu_header="Testmenu")
+>>>>>>> e4b00c36d5eff5d39b2eeca46129b48d1aaf0b6f
 
 if __name__ == "__main__":
     main()

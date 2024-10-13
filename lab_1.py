@@ -18,11 +18,13 @@ main_menu() - displays a main menu as described in the constant MAIN_MENU_LIST
 __version__ = "0.1"
 __author__ = "Jonas Bergstedt"
 import time
-# import nmap
+import json
 from pathlib import Path
+import nmap
 from pathvalidate import ValidationError, validate_filename
 from colorama import Fore,Style,Back
 from swejob_tools import misc_tools
+
 # Constants
 MENU_WIDTH = 38
 
@@ -37,6 +39,10 @@ ADDRESS_COLOR = Fore.MAGENTA
 ARGS_MENU_START_ROW = 4
 ARGS_MENU_START_COL = 1
 ARGS_COLOR = Fore.BLUE
+
+SCAN_RESULT_MENU_START_ROW = 4
+SCAN_RESULT_MENU_START_COL = 1
+SCAN_RESULT_COLOR = Fore.BLUE
 
 STATUS_MSG_START_ROW = 1
 STATUS_MSG_START_COL = 1
@@ -70,14 +76,22 @@ IP_FILE_EXT = ".ipfile"
 ARGS_LIST_START_ROW = 4
 ARGS_LIST_START_COL = 6
 ARGS_LIST_MAX_HEIGHT = 21
-ARGS_LIST_MAX_WIDTH = 135
+ARGS_LIST_MAX_WIDTH = 70
 
 ARG_FILE_EXT =".argfile"
+
+SCAN_RESULT_LIST_START_ROW = 4
+SCAN_RESULT_LIST_START_COL = 41
+SCAN_RESULT_LIST_MAX_HEIGHT = 30
+SCAN_RESULT_LIST_MAX_WIDTH = 100
+
+SCAN_RESULT_FILE_EXT = ".scanresfile"
 
 # Global variables
 _ip_addresses: set = {"127.0.0.1/32"}
 _status_msg: str = "Ready"
 _arg_string: str = ""
+_scan_results = []
 
 def set_status_msg(msg: str):
     """
@@ -148,17 +162,18 @@ def output_window(
             top_of_text = row_counter == 0
             # Check if at end of text
             end_of_text = row_counter + max_height-2 == len(text_list)
-            # print selector
-            misc_tools.pos_print(1,1,Fore.BLACK+Back.WHITE+Style.BRIGHT)
-            misc_tools.pos_print(start_row+1+selected_line, start_col+max_width-5,"<--")
-            misc_tools.pos_print(1,1,Fore.RESET+Back.RESET+Style.RESET_ALL)
+            if select_list:
+                # print selector
+                misc_tools.pos_print(1,1,Fore.BLACK+Back.WHITE+Style.BRIGHT)
+                misc_tools.pos_print(start_row+1+selected_line, start_col+max_width-5,"<--")
+                misc_tools.pos_print(1,1,Fore.RESET+Back.RESET+Style.RESET_ALL)
 
             if not top_of_text:
                 #Enable up arrow
-                misc_tools.pos_print(start_row+1, max_width+42, Fore.GREEN + "^")
+                misc_tools.pos_print(start_row+1, start_col+max_width+1, Fore.GREEN + "^")
             else:
                 #Disable up arrow
-                misc_tools.pos_print(start_row+1, max_width+42, Fore.RED + "^")
+                misc_tools.pos_print(start_row+1, start_col+max_width+1, Fore.RED + "^")
 
             if not end_of_text:
                 #Enable up arrow
@@ -167,38 +182,51 @@ def output_window(
                 #Disable up arrow
                 misc_tools.pos_print(start_row+max_height-2, start_col+max_width+1, Fore.RED+"V")
             print(Fore.RESET)
-            msg = "Move selector with up/down arrow."
+            msg = "Move with up/down arrow."
             if select_list:
-                msg = msg + " . Select With Enter."
+                msg = msg + " Select With Enter."
             msg = msg + " Any other key to quit!"
             set_status_msg(msg)
             print_status_msg()
+            misc_tools.pos_print(start_row+selected_line,start_col+1,"")
             nav = misc_tools.get_key(False)
             if nav == "\\xe0":
                 sec_nav = misc_tools.get_key(False)
                 # set_status_msg(f"{nav} + {sec_nav} was pressed")
                 # print_status_msg(1)
-                if sec_nav == "H" and select_list:
+                if sec_nav == "H":
                     # arrow up
-                    if selected_line == 0:
-                        # at top of window
+                    if select_list:
+                        # if it's a selectable list
+                        if selected_line == 0:
+                            # at top of window
+                            row_counter -=1
+                            row_counter = max(row_counter,0)
+                        else:
+                            # move up in window
+                            selected_line -=1
+                            selected_line = max(selected_line,0)
+                    else:
+                        # move up
                         row_counter -=1
                         row_counter = max(row_counter,0)
-                    else:
-                        # move up in window
-                        selected_line -=1
-                        selected_line = max(selected_line,0)
 
-                elif sec_nav == "P" and select_list:
+                elif sec_nav == "P":
                     # arrow down
-                    if selected_line > max_height-4:
-                        # at bottom of window
+                    if select_list:
+                        if selected_line > max_height-4:
+                            # at bottom of window
+                            row_counter +=1
+                            row_counter =min(row_counter, len(text_list)-(max_height-2))
+                        else:
+                            # move down in window
+                            selected_line +=1
+                            selected_line = min(selected_line,(max_height-3))
+                    else:
+                        # move down
                         row_counter +=1
                         row_counter =min(row_counter, len(text_list)-(max_height-2))
-                    else:
-                        # move down in window
-                        selected_line +=1
-                        selected_line = min(selected_line,(max_height-3))
+
             elif nav =="\\r" and select_list:
                 # Enter
                 return row_counter+selected_line
@@ -444,6 +472,8 @@ def load_ip_addresses():
     if not selected_file is None:
         load_ip_file(selected_file)
 
+# Constant with list of tuple containing:
+# Selector, menu item and funcion to run
 ADDRESS_MENU_LIST =[
         ("1", "Add IP address", add_ip_address),
         ("2", "Remove IP address", remove_ip_address),
@@ -562,7 +592,7 @@ def select_arguments():
             True,
             True
         )
-        # If pressing any other key dont change _arg_list 
+        # If pressing any other key leave function instead of changing anything
         if selection is None:
             return None
         # selected anything but the last line
@@ -585,15 +615,15 @@ def select_arguments():
         misc_tools.clear_screen()
         if len(port_str) > 0:
             # If there are already ports in the argument
-            set_status_msg(f"Ports already exist in the arguments: {port_str}. Do you want to keep them (Y/N)")
+            set_status_msg(f"Ports already exist in the arguments: {port_str}.Keep them (Y/N)")
             print_status_msg()
             keep = ""
             while keep not in ["Y","N"]:
                 keep = misc_tools.get_key()
             if keep == "N":
                 port_str = ""
-                    
-        set_status_msg(f"Enter port(s) to scan. Comma separated or range. Current ports:{port_str}")
+
+        set_status_msg(f"Enter port(s) to scan. CSV or range. Current ports:{port_str}")
         print_status_msg()
         valid_port_string = False
         while not valid_port_string:
@@ -606,7 +636,7 @@ def select_arguments():
             else:
                 # If just neter was pressed, it's as not adding to the previous portstrin
                 valid_port_string = True
-                
+
         port_str = port_str + " " + entered_port_str
 
     local_arg_str = ""
@@ -615,6 +645,7 @@ def select_arguments():
             local_arg_str = local_arg_str + " " + ARGS_LIST[idx][0].strip()
     local_arg_str += port_str
     _arg_string = local_arg_str
+    return local_arg_str
 
 def save_args():
     """
@@ -690,8 +721,10 @@ def load_args():
                         start_row=4,
                         start_col=1)
     if not selected_file is None:
-        load_ip_file(selected_file)
+        load_arg_file(selected_file)
 
+# Constant with list of tuple containing:
+# Selector, menu item and funcion to run
 ARGS_MENU_LIST = [
         ("1", "Select arguments from list", select_arguments),
         ("2", "Save arguments to file", save_args),
@@ -707,7 +740,7 @@ def args_menu():
     selection = ""
     while selection != "0":
         misc_tools.clear_screen()
-        set_status_msg(f"Set your arguments. Current arguments: {_arg_string}")
+        set_status_msg(f"Waiting for input. Select from Arguments menu. Current args:{_arg_string}")
         print_status_msg()
         print(ARGS_COLOR)
         selection = misc_tools.menu(
@@ -716,7 +749,170 @@ def args_menu():
             MENU_WIDTH-6,
             ARGS_MENU_START_ROW,
             ARGS_MENU_START_COL,
-            menu_header="Argument selection")
+            menu_header="Arguments menu")
+        print(Fore.RESET)
+
+def scan_host(host,in_arguments):
+    """ 
+    Scanning host with arguments, returning the scan result
+    """
+    set_status_msg(f"Scanning {host} with {_arg_string} as arguments.")
+    print_status_msg()
+    nm = nmap.PortScanner(nmap_search_path= [r"C:\Program Files (x86)\Nmap\nmap.exe",])
+    nm.scan(hosts=host, arguments=in_arguments)
+    set_status_msg(f"Scan of {host} is done. {nm.command_line()} was the command line")
+    print_status_msg(2)
+    result = nm[host.split("/")[0]]
+    return result
+
+def scan():
+    """ 
+    Scan the set of IP-adresses with the arguments
+    Save to list of scan results
+    """
+    for scan_ip_address in _ip_addresses:
+        scan_result = scan_host(scan_ip_address,_arg_string)
+        _scan_results.append(json.dumps(scan_result,indent=4))
+
+def display_scan_results():
+    """ 
+    Print full scan result in scrollable window
+    """
+    scan_results_strings =[]
+    for scan_result in _scan_results:
+        scan_results_strings = scan_results_strings + scan_result.split("\n")
+    scan_result_list =[]
+    for line in scan_results_strings:
+        scan_result_list.append((line,))
+    output_window(
+        scan_result_list,
+        SCAN_RESULT_LIST_START_ROW,
+        SCAN_RESULT_LIST_START_COL,
+        SCAN_RESULT_LIST_MAX_HEIGHT,
+        SCAN_RESULT_LIST_MAX_WIDTH,
+        True,
+        False)
+
+def display_stripped_scan_results():
+    """ 
+    Print stripped scan result in scrollable window
+    """
+    scan_results_strings =[]
+    for scan_result in _scan_results:
+        scan_results_strings = scan_results_strings + scan_result.split("\n")
+    scan_result_list =[]
+    for line in scan_results_strings:
+        scan_result_list.append((line,))
+    output_window(
+        scan_result_list,
+        SCAN_RESULT_LIST_START_ROW,
+        SCAN_RESULT_LIST_START_COL,
+        SCAN_RESULT_LIST_MAX_HEIGHT,
+        SCAN_RESULT_LIST_MAX_WIDTH,
+        True,
+        False)
+    
+def save_scan_results():
+    """ 
+    Save the scan results in a file in the current directory
+    """
+    misc_tools.clear_screen()
+    # List files with .ipfile - extension
+    display_file_list(f"{SCAN_RESULT_FILE_EXT}")
+    # Enter a filename to save the settings to
+    set_status_msg(f"Enter filename to save results to ('{SCAN_RESULT_FILE_EXT}' is the extension)")
+    print_status_msg()
+    valid_filename = False
+    # Check if entered text is a valid filename
+    while not valid_filename:
+        file_name = get_file_name() + SCAN_RESULT_FILE_EXT
+        valid_filename = is_valid_file_name(file_name)
+        if not valid_filename:
+            set_status_msg(f"'{file_name}' is not a valid filename. Try again.")
+
+    # Check if file already exists
+    if file_exists(file_name):
+        set_status_msg(f"'{file_name}' already exists. Press Y to overwrite, other key to cancel")
+        print_status_msg()
+        answer = misc_tools.get_key()
+        if answer != "Y":
+            set_status_msg("Cancelling saving scan results to file")
+            print_status_msg(1)
+            return False
+
+    # Try writing to file
+    set_status_msg(f"Writing scan results to '{file_name}'")
+    print_status_msg()
+    try:
+        with open(file_name,'w', encoding="utf-8") as scan_result_file:
+            for scan_result in _scan_results:
+                scan_result_file.write(scan_result+'\n')
+    except:
+        set_status_msg(f"Something went wrong writing scan results to '{file_name}'")
+        return False
+    print_status_msg(1)
+    return True
+
+def load_scan_result_file(file_name):
+    """ 
+    Load scan results from a SCAN_RESULT_FILE_EXT-file to global variable _ip_adresses
+    """
+    try:
+        with open(file_name, 'r', encoding="utf-8") as scan_result_file:
+            local_scan_results=[]
+            for line in scan_result_file:
+                local_scan_results.append(line)
+            global _scan_results
+            _scan_results = local_scan_results
+    except:
+        set_status_msg(f"Something went wrong when reading scan results from {file_name}")
+
+def load_scan_results():
+    """ 
+    Dialogue to load list of scan_results from a file
+    """
+    # List files with .ipfile - extension
+    # Let user select
+    # Read file
+    misc_tools.clear_screen()
+    set_status_msg("Select file to load scan results from")
+    print_status_msg()
+    selected_file = display_file_list(
+                        extension=SCAN_RESULT_FILE_EXT,
+                        selectable=True,
+                        start_row=4,
+                        start_col=1)
+    if not selected_file is None:
+        load_scan_result_file(selected_file)
+        
+# Constant with list of tuple containing:
+# Selector, menu item and funcion to run
+# Lines commented out are yet to be implemented
+SCAN_RESULT_MENU_LIST = [
+        ("1", "Save result of scan to file", save_scan_results),
+        ("2", "Load results oc scan from file", load_scan_results),
+        ("0", "Return to main menu", misc_tools.nothing),
+        ("Q", "Quit program", end_program)
+    ]
+
+def scan_results_menu():
+    """ 
+    Display Scan result menu to show, save and reload scan results
+    """
+    selection = ""
+    while selection != "0":
+        misc_tools.clear_screen()
+        set_status_msg("Waiting for input. Select from Scan results menu")
+        print_status_msg()
+        display_scan_results()
+        print(SCAN_RESULT_COLOR)
+        selection = misc_tools.menu(
+            SCAN_RESULT_MENU_LIST,
+            5,
+            MENU_WIDTH-6,
+            SCAN_RESULT_MENU_START_ROW,
+            SCAN_RESULT_MENU_START_COL,
+            menu_header="Scan results menu")
         print(Fore.RESET)
 
 # Constant with list of tuple containing:
@@ -725,8 +921,8 @@ def args_menu():
 MAIN_MENU_LIST = [
         ("1", "IP address(es)...", ip_address_menu),
         ("2", "Arguments and flags...", args_menu),
-        # ("3", "Scan", scan_menu),
-        # ("4", "Scan result...", display_scan_result),
+        ("3", "Scan", scan),
+        ("4", "Scan results...", scan_results_menu),
         # ("7", "Help",display_help),
         ("Q", "Quit program", misc_tools.nothing),
         # ("R", "Refresh screen", misc_tools.clear_screen),

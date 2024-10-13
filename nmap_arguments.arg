@@ -1,0 +1,32 @@
+{   
+    "arguments": { 
+        "host discovery": {
+            "-sL": ("bool","List Scan - simply list targets to scan"),
+            "-sn": ("bool","Ping Scan - disable port scan"),
+            "-Pn": ("bool","Treat all hosts as online -- skip host discovery"),
+            "-PS": ("bool", "TCP SYN"),
+            "-PA": ("bool", "TCP ACK"),
+            "-PU": ("bool", "UDP"),
+            "-PY": ("bool", "SCTP"),
+            
+        },
+        "scan techniques": {
+            "-sS": ("bool","TCP SYN"),
+            "-sT": ("bool","Connect()"),
+            "-sA": ("bool","ACK"),
+            "-sW": ("bool","Window),
+            "-sU": ("bool","UDP Scan"),
+            "-sN": ("bool","TCP Null"),
+            "-sF": ("bool","FIN"), 
+            "-sX": ("bool","Xmas scans"),
+            "-sO": ("bool","IP protocol scan")
+        },
+        "PORT SPECIFICATION": {
+            "-p": ("str", "<port ranges>: Only scan specified ports")
+        },
+        "OS Detection": {
+            "-O": ("","Enable OS detection")
+        }
+
+    }
+}

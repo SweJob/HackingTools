@@ -34,22 +34,16 @@ ADDRESS_MENU_START_ROW = 4
 ADDRESS_MENU_START_COL = 1
 ADDRESS_COLOR = Fore.MAGENTA
 
+ARGS_MENU_START_ROW = 4
+ARGS_MENU_START_COL = 1
+ARGS_COLOR = Fore.BLUE
+
 STATUS_MSG_START_ROW = 1
 STATUS_MSG_START_COL = 1
 STATUS_MSG_MAX_WIDTH = 140
 STATUS_MSG_COLOR = Fore.GREEN
 
 OUTPUT_WINDOW_COLOR = Fore.YELLOW
-
-IP_ADR_LIST_START_ROW = 4
-IP_ADR_LIST_START_COL = 41
-IP_ADR_LIST_MAX_HEIGHT= 30
-IP_ADR_LIST_MAX_WIDTH = 100
-
-IP_ADR_INPUT_START_ROW = 4
-IP_ADR_INPUT_START_COL = 1
-IP_ADR_INPUT_MAX_HEIGHT = 3
-IP_ADR_INPUT_MAX_WIDTH = STATUS_MSG_MAX_WIDTH
 
 FILE_INPUT_START_ROW =  4
 FILE_INPUT_START_COL = 41
@@ -61,11 +55,29 @@ FILE_LIST_START_COL = 41
 FILE_LIST_MAX_HEIGHT= 10
 FILE_LIST_MAX_WIDTH = 100
 
+IP_ADR_LIST_START_ROW = 4
+IP_ADR_LIST_START_COL = 41
+IP_ADR_LIST_MAX_HEIGHT= 30
+IP_ADR_LIST_MAX_WIDTH = 100
+
+IP_ADR_INPUT_START_ROW = 4
+IP_ADR_INPUT_START_COL = 1
+IP_ADR_INPUT_MAX_HEIGHT = 3
+IP_ADR_INPUT_MAX_WIDTH = STATUS_MSG_MAX_WIDTH
+
 IP_FILE_EXT = ".ipfile"
 
+ARGS_LIST_START_ROW = 4
+ARGS_LIST_START_COL = 6
+ARGS_LIST_MAX_HEIGHT = 21
+ARGS_LIST_MAX_WIDTH = 135
+
+ARG_FILE_EXT =".argfile"
+
 # Global variables
-_ip_addresses = {"127.0.0.1/32"}
-_status_msg = "Ready"
+_ip_addresses: set = {"127.0.0.1/32"}
+_status_msg: str = "Ready"
+_arg_string: str = ""
 
 def set_status_msg(msg: str):
     """
@@ -95,8 +107,9 @@ def print_status_msg(delay :int = 0):
 
 def end_program():
     """ 
-    Clears screen and quits to shell
+    Reset terminal, clear screen and quit to shell
     """
+    print(Fore.RESET + Back.RESET + Style.RESET_ALL)
     misc_tools.clear_screen()
     misc_tools.stop_program()
 
@@ -366,7 +379,7 @@ def save_ip_addresses():
     # List files with .ipfile - extension
     display_file_list(f"{IP_FILE_EXT}")
     # Enter a filename to save the settings to
-    set_status_msg("Enter filename to save IP-addresses to ('.ipfile' will be the extension)")
+    set_status_msg(f"Enter filename to save IP-addresses to ('{IP_FILE_EXT}' is the extension)")
     print_status_msg()
     valid_filename = False
     # Check if entered text is a valid filename
@@ -384,36 +397,38 @@ def save_ip_addresses():
         if answer != "Y":
             set_status_msg("Cancelling saving IP-addresses to file")
             print_status_msg(1)
-            return
+            return False
 
     # Try writing to file
     set_status_msg(f"Writing IP-addresses to '{file_name}'")
     print_status_msg()
     try:
-        with open(file_name,'w') as ip_file:
+        with open(file_name,'w', encoding="utf-8") as ip_file:
             for address in _ip_addresses:
                 ip_file.write(address+'\n')
     except:
         set_status_msg(f"Something went wrong writing IP-addresses to '{file_name}'")
+        return False
     print_status_msg(1)
+    return True
 
 def load_ip_file(file_name):
     """ 
-    Load IP-adresses from a .ipfile to global variable _ip_adresses
+    Load IP-adresses from a IP_FILE_EXT-file to global variable _ip_adresses
     """
     try:
-        with open(file_name, 'r') as ip_file:
+        with open(file_name, 'r', encoding="utf-8") as ip_file:
             local_address_set =set([])
             for line in ip_file:
                 local_address_set.add(line)
             global _ip_addresses
             _ip_addresses = local_address_set
     except:
-        set_status_msg(f"Something went wrong when reading from {file_name}")
+        set_status_msg(f"Something went wrong when reading IP-adresses from {file_name}")
 
 def load_ip_addresses():
     """ 
-    Load list of IP adressess from a file
+    Dialogue to load list of IP adressess from a file
     """
     # List files with .ipfile - extension
     # Let user select
@@ -458,16 +473,260 @@ def ip_address_menu():
             menu_header="IP address menu")
         print(Fore.RESET)
 
+ARGS_LIST = [
+        ("-sL".ljust(5),": List Scan - simply list targets to scan"),
+        ("-sn".ljust(5),": Ping Scan - disable port scan"),
+        ("-Pn".ljust(5),": Treat all hosts as online -- skip host discovery"),
+        ("-PS".ljust(5),": TCP SYN"),
+        ("-PA".ljust(5),": TCP ACK"),
+        ("-PU".ljust(5),": UDP"),
+        ("-PY".ljust(5),": SCTP"),
+        ("-sS".ljust(5),": TCP SYN"),
+        ("-sT".ljust(5),": Connect()"),
+        ("-sA".ljust(5),": ACK"),
+        ("-sW".ljust(5),": Window"),
+        ("-sU".ljust(5),": UDP Scan"),
+        ("-sN".ljust(5),": TCP Null"),
+        ("-sF".ljust(5),": FIN"),
+        ("-sX".ljust(5),": Xmas scans"),
+        ("-sO".ljust(5),": IP protocol scan"),
+        ("-O".ljust(5),": Enable OS detection"),
+        ("-p".ljust(5),": <port ranges>: Only scan specified ports. Specify on next screen"),
+        ("Finished selecting arguments",)
+    ]
+def get_ports():
+    """
+    Return a filename entered by user
+    """
+    # Get input , prompt under status message
+    output_window(
+        [tuple()],
+        IP_ADR_INPUT_START_ROW,
+        IP_ADR_INPUT_START_COL,
+        IP_ADR_INPUT_MAX_HEIGHT,
+        IP_ADR_INPUT_MAX_WIDTH,
+        False, False)
+    ports = input(f"\x1b[{IP_ADR_INPUT_START_ROW+1};{IP_ADR_INPUT_START_COL+1}HPorts: ")
+    return ports
+
+def select_arguments():
+    """ 
+    Display list of arguments and select which should be active or not 
+    and provide extra info for those who accepts it
+    """
+    # Make a list of bools to keep track of which arguments are selected.
+    # Set start values according to whats in the arguments
+    global _arg_string
+    port_str =""
+    selected_arg_list =[]
+    for arg in ARGS_LIST:
+        flag = arg[0].strip()
+        if _arg_string.find(flag) != -1:
+            selected_arg_list.append(True)
+            if arg[0] == "-p":
+                # if -p was an argument, rest of the _arg_string should be the port numbers
+                # store this into port_str
+                port_str = _arg_string[_arg_string.find(flag)+2:]
+        else:
+            selected_arg_list.append(False)
+    # remove last value in list, as it's not pointing to a flag
+    selected_arg_list.pop()
+
+    # Make a print_list with "Yes" for selected and "No" for not selected
+    print_select_list =[]
+    for selected in selected_arg_list:
+        if selected:
+            print_select_list.append(("Yes",))
+        else:
+            print_select_list.append(("No",))
+
+    # Add a line for the Finish line in ARGS_LIST
+    print_select_list.append(("",))
+    selection = 0
+    while selection < len(ARGS_LIST)-1:
+        # print the selection stat. Output is a bit buggish if terminal is not high enough
+        misc_tools.print_window(
+            print_select_list,
+            ARGS_LIST_START_ROW,
+            ARGS_LIST_START_COL-5,
+            width = 5,
+            frame = True
+        )
+        # print the arguments
+        selection = output_window(
+            ARGS_LIST,
+            ARGS_LIST_START_ROW,
+            ARGS_LIST_START_COL,
+            ARGS_LIST_MAX_HEIGHT,
+            ARGS_LIST_MAX_WIDTH,
+            True,
+            True
+        )
+        # If pressing any other key dont change _arg_list 
+        if selection is None:
+            return None
+        # selected anything but the last line
+        if selection < len(ARGS_LIST)-1:
+            # Toggle value of selected flag
+            selected_arg_list[selection] = not selected_arg_list[selection]
+            # Reset print_list with updated "Yes" for selected and "No" for not selected
+            print_select_list.clear()
+            for selected in selected_arg_list:
+                if selected:
+                    print_select_list.append(("Yes",))
+                else:
+                    print_select_list.append(("No",))
+            # Add a line for the Finish line in ARGS_LIST
+            print_select_list.append(("",))
+
+    if selected_arg_list[-1]:
+        # If selected the last arguement "-p" then go through this extra menu
+        #Enter a list or range of ports
+        misc_tools.clear_screen()
+        if len(port_str) > 0:
+            # If there are already ports in the argument
+            set_status_msg(f"Ports already exist in the arguments: {port_str}. Do you want to keep them (Y/N)")
+            print_status_msg()
+            keep = ""
+            while keep not in ["Y","N"]:
+                keep = misc_tools.get_key()
+            if keep == "N":
+                port_str = ""
+                    
+        set_status_msg(f"Enter port(s) to scan. Comma separated or range. Current ports:{port_str}")
+        print_status_msg()
+        valid_port_string = False
+        while not valid_port_string:
+            entered_port_str=get_ports()
+            if entered_port_str != "":
+                for ports in entered_port_str.split(","):
+                    for port in ports.split("-"):
+                        if port.isdigit():
+                            valid_port_string = True
+            else:
+                # If just neter was pressed, it's as not adding to the previous portstrin
+                valid_port_string = True
+                
+        port_str = port_str + " " + entered_port_str
+
+    local_arg_str = ""
+    for idx,selected in enumerate(selected_arg_list):
+        if selected:
+            local_arg_str = local_arg_str + " " + ARGS_LIST[idx][0].strip()
+    local_arg_str += port_str
+    _arg_string = local_arg_str
+
+def save_args():
+    """
+    Save arguments to file
+    """
+    misc_tools.clear_screen()
+    if len(_arg_string) < 1:
+        set_status_msg("No arguments are set!")
+        print_status_msg(1)
+        return None
+
+    # List files with .ipfile - extension
+    display_file_list(f"{ARG_FILE_EXT}")
+    # Enter a filename to save the settings to
+    set_status_msg(f"Enter filename to save arguments to ('{ARG_FILE_EXT}' is the extension)")
+    print_status_msg()
+    valid_filename = False
+    # Check if entered text is a valid filename
+    while not valid_filename:
+        file_name = get_file_name() + ARG_FILE_EXT
+        valid_filename = is_valid_file_name(file_name)
+        if not valid_filename:
+            set_status_msg(f"'{file_name}' is not a valid filename. Try again.")
+
+    # Check if file already exists
+    if file_exists(file_name):
+        set_status_msg(f"'{file_name}' already exists. Press Y to overwrite, other key to cancel")
+        print_status_msg()
+        answer = misc_tools.get_key()
+        if answer != "Y":
+            set_status_msg("Cancelling saving arguments to file")
+            print_status_msg(1)
+            return False
+
+    # Try writing to file
+    set_status_msg(f"Writing arguments to '{file_name}'")
+    print_status_msg()
+    try:
+        with open(file_name,'w', encoding="utf-8") as arg_file:
+            arg_file.write(_arg_string)
+    except:
+        set_status_msg(f"Something went wrong writing arguments to '{file_name}'")
+        return False
+    print_status_msg(1)
+    return True
+
+def load_arg_file(file_name):
+    """ 
+    Load arguments from a ARG_FILE_EXT-file to global variable _arg_string
+    """
+    try:
+        with open(file_name, 'r', encoding="utf-8") as arg_file:
+            local_arg_string = arg_file.readline()
+            global _arg_string
+            _arg_string = local_arg_string
+    except:
+        set_status_msg(f"Something went wrong when reading arguments from {file_name}")
+        print_status_msg(1)
+
+def load_args():
+    """ 
+    Dialogue to load arguments from a file
+    """
+    # List files with .ipfile - extension
+    # Let user select
+    # Read file
+    misc_tools.clear_screen()
+    set_status_msg("Select file to load arguments from")
+    print_status_msg()
+    selected_file = display_file_list(
+                        extension=ARG_FILE_EXT,
+                        selectable=True,
+                        start_row=4,
+                        start_col=1)
+    if not selected_file is None:
+        load_ip_file(selected_file)
+
+ARGS_MENU_LIST = [
+        ("1", "Select arguments from list", select_arguments),
+        ("2", "Save arguments to file", save_args),
+        ("3", "Load arguments from file", load_args),
+        ("0", "Return to main menu", misc_tools.nothing),
+        ("Q", "Quit program", end_program)
+    ]
+
+def args_menu():
+    """ 
+    Select what arguments to use
+    """
+    selection = ""
+    while selection != "0":
+        misc_tools.clear_screen()
+        set_status_msg(f"Set your arguments. Current arguments: {_arg_string}")
+        print_status_msg()
+        print(ARGS_COLOR)
+        selection = misc_tools.menu(
+            ARGS_MENU_LIST,
+            5,
+            MENU_WIDTH-6,
+            ARGS_MENU_START_ROW,
+            ARGS_MENU_START_COL,
+            menu_header="Argument selection")
+        print(Fore.RESET)
+
 # Constant with list of tuple containing:
 # Selector, menu item and funcion to run
 # Lines commented out are yet to be implemented
 MAIN_MENU_LIST = [
         ("1", "IP address(es)...", ip_address_menu),
-        # ("2", "Arguments and flags...", args_menu),
+        ("2", "Arguments and flags...", args_menu),
         # ("3", "Scan", scan_menu),
         # ("4", "Scan result...", display_scan_result),
-        # ("5", "Save scan settings to file", save_scan_settings),
-        # ("6", "Load scan settings from file", load_scan_settings),
         # ("7", "Help",display_help),
         ("Q", "Quit program", misc_tools.nothing),
         # ("R", "Refresh screen", misc_tools.clear_screen),

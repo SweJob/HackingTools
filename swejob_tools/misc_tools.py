@@ -284,6 +284,11 @@ def print_window(row_list:list, start_row=1, start_column=1, width=30, frame=Tru
         pos_print(row,column,"╚" + "═"*(width-2) + "╝")
         row +=1
 
+def minimal_terminal_size(min_rows: int = 20, min_cols:int = 60):
+    if get_terminal_height() < min_rows or get_terminal_width() < min_cols:
+        return False
+    return True
+
 def main():
     """ 
     main function used to test that functions behave as they are supposed to

@@ -831,10 +831,7 @@ def display_stripped_scan_results():
                                             "State").ljust(COLUMN)+
                                             ": "+
                                             port_info["state"])
-                scan_results_strings.append((INDENT*2+
-                                            "Version").ljust(COLUMN)+
-                                            ": "+
-                                            port_info["version"])
+
         # UDP ports "udp": {"portnummer":{state, reason, name, version}
         is_udp = scan_result.get("udp")
         if is_udp is not None:
@@ -848,10 +845,6 @@ def display_stripped_scan_results():
                                             "State").ljust(COLUMN)+
                                             ": "+
                                             port_info["state"])
-                scan_results_strings.append((INDENT*2 +
-                                            "Version").ljust(COLUMN)+
-                                            ": "+
-                                            port_info["version"])
         # add empty line to last string of each scan result
         scan_results_strings.append("-----------------------------")
     scan_result_list =[]

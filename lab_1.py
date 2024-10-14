@@ -1,5 +1,5 @@
 """ 
-Laboration 1 - ITST24 , programmering för säkerhetstestare
+Laboration 1 - Kurs "Programmering för säkerhetstestare", ITST24 , IT-Högskolan
 Module for using nmap from python
 Requirements:
 1. Possible to save the result of the scan to a file
@@ -15,7 +15,7 @@ end_program() - quits to shell and clears screen to avoid a cluttered shell
 main_menu() - displays a main menu as described in the constant MAIN_MENU_LIST
 """
 
-__version__ = "0.1"
+__version__ = "0.2"
 __author__ = "Jonas Bergstedt"
 import time
 import json
@@ -76,7 +76,7 @@ IP_FILE_EXT = ".ipfile"
 ARGS_LIST_START_ROW = 4
 ARGS_LIST_START_COL = 6
 ARGS_LIST_MAX_HEIGHT = 21
-ARGS_LIST_MAX_WIDTH = 70
+ARGS_LIST_MAX_WIDTH = 75
 
 ARG_FILE_EXT =".argfile"
 
@@ -185,7 +185,7 @@ def output_window(
             msg = "Move with up/down arrow."
             if select_list:
                 msg = msg + " Select With Enter."
-            msg = msg + " Any other key to quit!"
+            msg = msg + " Any other key to exit scroll window!"
             set_status_msg(msg)
             print_status_msg()
             misc_tools.pos_print(start_row+selected_line,start_col+1,"")
@@ -544,6 +544,7 @@ def select_arguments():
     Display list of arguments and select which should be active or not 
     and provide extra info for those who accepts it
     """
+    # // NOTE: A risk of displaying problems if the terminal window is not high enough
     # Make a list of bools to keep track of which arguments are selected.
     # Set start values according to whats in the arguments
     global _arg_string
@@ -797,9 +798,20 @@ def display_stripped_scan_results():
     """ 
     Print stripped scan result in scrollable window
     """
+
+    # At the moment doing exatly the same as display_scan_results
+    # TODO: Making an excercept of the result_String and showing the most vital informaiton
     scan_results_strings =[]
     for scan_result in _scan_results:
+        # hostname  "hostnames": [{"name":}]
+        # ip_adress "addresses": {"ipv4":}
+        # status    "status":{"state":}
+        # tcp_ports "tcp": {"portnummer":{state, reason, name, version}
+        # udp_ports "udp": {"portnummer":{state, reason, name, version}
+
         scan_results_strings = scan_results_strings + scan_result.split("\n")
+        # add new line to last string of each scan result
+        scan_results_strings[-1] += "\n"
     scan_result_list =[]
     for line in scan_results_strings:
         scan_result_list.append((line,))
@@ -811,7 +823,7 @@ def display_stripped_scan_results():
         SCAN_RESULT_LIST_MAX_WIDTH,
         True,
         False)
-    
+
 def save_scan_results():
     """ 
     Save the scan results in a file in the current directory
@@ -840,13 +852,13 @@ def save_scan_results():
             print_status_msg(1)
             return False
 
-    # Try writing to file
+    # Try writing to file as json
     set_status_msg(f"Writing scan results to '{file_name}'")
     print_status_msg()
     try:
         with open(file_name,'w', encoding="utf-8") as scan_result_file:
             for scan_result in _scan_results:
-                scan_result_file.write(scan_result+'\n')
+                json.dump(scan_result, scan_result_file, indent=4)
     except:
         set_status_msg(f"Something went wrong writing scan results to '{file_name}'")
         return False
@@ -859,10 +871,11 @@ def load_scan_result_file(file_name):
     """
     try:
         with open(file_name, 'r', encoding="utf-8") as scan_result_file:
+            global _scan_results
             local_scan_results=[]
             for line in scan_result_file:
-                local_scan_results.append(line)
-            global _scan_results
+                scan_result = json.loads(line)
+                local_scan_results.append(scan_result)
             _scan_results = local_scan_results
     except:
         set_status_msg(f"Something went wrong when reading scan results from {file_name}")
@@ -884,16 +897,18 @@ def load_scan_results():
                         start_col=1)
     if not selected_file is None:
         load_scan_result_file(selected_file)
-        
+
 # Constant with list of tuple containing:
 # Selector, menu item and funcion to run
 # Lines commented out are yet to be implemented
 SCAN_RESULT_MENU_LIST = [
-        ("1", "Save result of scan to file", save_scan_results),
-        ("2", "Load results oc scan from file", load_scan_results),
-        ("0", "Return to main menu", misc_tools.nothing),
-        ("Q", "Quit program", end_program)
-    ]
+    ("1", "Display full scan results",display_scan_results),
+    ("2", "Display scan results",display_stripped_scan_results),
+    ("3", "Save result of scan to file", save_scan_results),
+    ("4", "Load results oc scan from file", load_scan_results),
+    ("0", "Return to main menu", misc_tools.nothing),
+    ("Q", "Quit program", end_program)
+]
 
 def scan_results_menu():
     """ 
@@ -904,7 +919,6 @@ def scan_results_menu():
         misc_tools.clear_screen()
         set_status_msg("Waiting for input. Select from Scan results menu")
         print_status_msg()
-        display_scan_results()
         print(SCAN_RESULT_COLOR)
         selection = misc_tools.menu(
             SCAN_RESULT_MENU_LIST,

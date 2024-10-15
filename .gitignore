@@ -1,3 +1,10 @@
-/.vscode
+/.vscode/
+lib64
+__pycahce_/
+include/
+bin/
+lib/
+pyvenv.cfg
 swejob_tools/__pycache__/
-swejob_tools/getkey/getkey/__pycache__
+swejob_tools/__pycache__/misc_tools.*.pyc
+swejob_tools/getkey/getkey/__pycache__/

@@ -84,9 +84,10 @@ def get_key(mode=0,catch_break=True):
     elif mode==9:
         # Return raw value, used for testing
         key_pressed = str(getkey.getkey())
-        if catch_break and key_pressed .strip("b'")== "\\x03":
+        if catch_break and key_pressed.strip("b'")== "\\x03":
             stop_program()
-        return key_pressed
+        *key_codes, = key_pressed
+        return key_codes
 
 def get_terminal_width():
     """ Returns width of terminal in columns """

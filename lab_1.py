@@ -474,8 +474,8 @@ def load_ip_file(file_name):
             _ip_addresses = local_address_set
             global _addr_saved
             _addr_saved = True
-    except:
-        set_status_msg(f"Something went wrong when reading IP-adresses from {file_name}")
+    except Exception as e:
+        set_status_msg(f"Error {e} when reading IP-adresses from {file_name}")
 
 def load_ip_addresses():
     """ 
@@ -721,8 +721,8 @@ def load_arg_file(file_name):
             _port_str = arg_file.readline()
         global _args_saved
         _args_saved = True
-    except:
-        set_status_msg(f"Something went wrong when reading arguments from {file_name}")
+    except Exception as e:
+        set_status_msg(f"Error {e} reading arguments from {file_name}")
         print_status_msg(1)
 
 def load_args():
@@ -949,8 +949,8 @@ def load_scan_result_file(file_name):
             _scan_results = local_scan_results
             global _scan_saved
             _scan_saved = True
-    except:
-        set_status_msg(f"Something went wrong when reading scan results from {file_name}")
+    except Exception as e:
+        set_status_msg(f"Error {e} when reading scan results from {file_name}")
         print_status_msg(2)
 
 def load_scan_results():

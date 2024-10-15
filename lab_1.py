@@ -221,7 +221,7 @@ def output_window(
                 nav = misc_tools.get_key(test=True)
                 print(f"nav is{nav}")
                 input("Press Enter...")
-                if nav[0] == r"\x1b":
+                if nav[0] == "\x1b":
                     print("inside nav[0]")
                     input("Press Enter...")
                     #sec_nav = misc_tools.get_key()

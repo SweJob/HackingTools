@@ -714,7 +714,7 @@ def save_args():
 def load_arg_file(file_name):
     """ Load arguments from a ARG_FILE_EXT-file to global variable _arg_string """
     try:
-        with open(file_name.strip()), 'r', encoding="utf-8") as arg_file:
+        with open(file_name.strip(), 'r', encoding="utf-8") as arg_file:
             global _arg_string
             global _port_str
             _arg_string = arg_file.readline().strip("\n")

@@ -476,7 +476,7 @@ def load_ip_file(file_name):
             _addr_saved = True
     except Exception as e:
         set_status_msg(f"Error {e} when reading IP-adresses from {file_name}")
-
+        print_status_msg(3)
 def load_ip_addresses():
     """ 
     Dialogue to load list of IP adressess from a file
@@ -723,7 +723,7 @@ def load_arg_file(file_name):
         _args_saved = True
     except Exception as e:
         set_status_msg(f"Error {e} reading arguments from {file_name}")
-        print_status_msg(1)
+        print_status_msg(3)
 
 def load_args():
     """ Dialogue to load arguments from a file """
@@ -951,7 +951,7 @@ def load_scan_result_file(file_name):
             _scan_saved = True
     except Exception as e:
         set_status_msg(f"Error {e} when reading scan results from {file_name}")
-        print_status_msg(2)
+        print_status_msg(3)
 
 def load_scan_results():
     """ Dialogue to load list of scan_results from a file """

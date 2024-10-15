@@ -82,6 +82,10 @@ _args_saved: bool = True
 _scan_saved: bool = True
 
 def check_terminal_size():
+    """ 
+    Check if size of terminal is with in value of constants. 
+    Other wise tells user  and loops and checks again, until window is resized
+    """
     misc_tools.clear_screen()
     while not misc_tools.minimal_terminal_size(TERM_MIN_ROW,TERM_MIN_ROW):
         height = misc_tools.get_terminal_height()

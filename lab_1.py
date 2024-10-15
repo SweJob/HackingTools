@@ -222,7 +222,7 @@ def output_window(
                 if nav[0] == "\x1b":
                     sec_nav = nav[2]
                     key_pressed = ""
-                    if key_pressed == "A":
+                    if sec_nav == "A":
                         key_pressed = "UP"
                     elif sec_nav == "B":
                         key_pressed = "DOWN"

@@ -1,10 +1,10 @@
 # HackingTools
-### SweJob's small collection of home made utilities 
+### SweJob's small collection of home made utilities
 ### as we are learning how to code for pentesting
 
-HackingTools is a set of python scripts that are created as a part of my education as a pentester
-The first tool created is: lab_1.py that was created as an attempt carry out the asignment "Laboration 1"
-The instructions for us students for Laboration 1 was as follows:
+#### HackingTools is a set of python scripts that are created as a part of my education as a pentester
+#### The first tool created is: lab_1.py that was created as an attempt carry out the asignment "Laboration 1"
+#### The instructions for us students for Laboration 1 was as follows:
 ---
 ### Laboration 1 - Kurs "Programmering för säkerhetstestare", ITST24 , IT-Högskolan
 Module for using nmap from python

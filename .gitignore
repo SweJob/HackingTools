@@ -6,5 +6,6 @@ bin/
 lib/
 pyvenv.cfg
 swejob_tools/__pycache__/
-swejob_tools/__pycache__/misc_tools.*.pyc
+swejob_tools/__pycache__/misc_tools.cpython-312.pyc
 swejob_tools/getkey/getkey/__pycache__/
+

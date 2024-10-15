@@ -9,7 +9,7 @@ Requirements:
 Optional:
 4. Developers imagination to add more functions in the tool
 """
-__version__ = "0.2"
+__version__ = "0.5"
 __author__ = "Jonas Bergstedt"
 import time
 import json

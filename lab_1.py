@@ -222,7 +222,7 @@ def output_window(
                 if nav == "\\x1b":
                     sec_nav = misc_tools.get_key()
                     if sec_nav == "[":
-                        sec_nav == sec_nav = misc_tools.get_key()
+                        sec_nav = misc_tools.get_key()
                     key_pressed==""           
                     if sec_nav == "A":
                         key_pressed = "UP"

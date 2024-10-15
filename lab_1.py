@@ -400,7 +400,7 @@ def display_file_list(
         selectable)
     if selectable and not selected_file is None:
         file_name = display_list[selected_file][0]
-        return file_name
+        return file_name.strip()
     return None
 
 def get_file_name():
@@ -466,7 +466,7 @@ def save_ip_addresses():
 def load_ip_file(file_name):
     """ Load IP-adresses from a IP_FILE_EXT-file to global variable _ip_adresses """
     try:
-        with open(file_name, 'r', encoding="utf-8") as ip_file:
+        with open(file_name.strip(), 'r', encoding="utf-8") as ip_file:
             local_address_set =set([])
             for line in ip_file:
                 local_address_set.add(line)
@@ -714,7 +714,7 @@ def save_args():
 def load_arg_file(file_name):
     """ Load arguments from a ARG_FILE_EXT-file to global variable _arg_string """
     try:
-        with open(file_name, 'r', encoding="utf-8") as arg_file:
+        with open(file_name.strip()), 'r', encoding="utf-8") as arg_file:
             global _arg_string
             global _port_str
             _arg_string = arg_file.readline().strip("\n")
@@ -940,7 +940,7 @@ def save_scan_results():
 def load_scan_result_file(file_name):
     """ Load scan results from a SCAN_RESULT_FILE_EXT-file to global variable _ip_adresses """
     try:
-        with open(file_name, 'r', encoding="utf-8") as scan_result_file:
+        with open(file_name.strip(), 'r', encoding="utf-8") as scan_result_file:
             local_scan_results=[]
             for scan_result in(scan_result_file):
                 scan_result_dict = json.loads(scan_result)

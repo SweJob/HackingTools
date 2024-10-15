@@ -51,15 +51,6 @@ def clear_screen():
     else:
         os.system('clear')
 
-def clear_screen():
-    """
-    clears terminal window on both windows and linux
-    """
-    if is_windows():
-        os.system('cls')
-    else:
-        os.system('clear')
-
 def is_float(string):
     """ Tests if the provided string is a float value """
     try:
@@ -68,26 +59,32 @@ def is_float(string):
     except ValueError:
         return False
 
-def get_key(mode=0,catch_break=True):
+def get_key(catch_break: bool = True):
     """ 
     Grabs key pressed and returns key as a string
     If not alphabetical or numerical value, escape code is returned,
     ex: \t for tab, \r for return
     Ctrl-C is separatly handled if catch_break and runs the stop_program() function,
     """
-    if mode==0:
+    if is_windows():
         key_pressed = getkey.getkey().strip("b'")
         # If catch_break is enabled and Ctrl-C is pressed, stop the program
         if catch_break and key_pressed == "\\x03":
             stop_program()
         return key_pressed
-    elif mode==9:
-        # Return raw value, used for testing
-        key_pressed = str(getkey.getkey())
-        if catch_break and key_pressed.strip("b'")== "\\x03":
+    else:
+        key_pressed = getkey.getkey()        
+        # If catch_break is enabled and Ctrl-C is pressed, stop the program
+        if catch_break and key_pressed == "\\x03":
             stop_program()
-        *key_codes, = key_pressed
-        return key_codes
+        return key_pressed
+    # elif mode==9:
+    #     # Return raw value, used for testing
+    #     key_pressed = str(getkey.getkey())
+    #     if catch_break and key_pressed.strip("b'")== "\\x03":
+    #         stop_program()
+    #     *key_codes, = key_pressed
+    #     return key_codes
 
 def get_terminal_width():
     """ Returns width of terminal in columns """

@@ -219,11 +219,14 @@ def output_window(
             else:
                 # Key handling in not-windows, FIXME: Arrows and Enter not correctly handled
                 nav = misc_tools.get_key(test=True)
+                print(f"nav is{nav}")
                 if nav[0] == "\\x1b":
+                    print("inside nav[0]")
                     #sec_nav = misc_tools.get_key()
                     #if sec_nav == "[":
                     #    sec_nav = misc_tools.get_key()
                     key_pressed = nav[2]
+                    print(key_pressed)
                     if sec_nav == "A":
                         key_pressed = "UP"
                     elif sec_nav == "B":

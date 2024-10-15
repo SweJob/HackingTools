@@ -524,8 +524,8 @@ def ip_address_menu():
         print(Fore.RESET)
 
 ARGS_LIST = [
-        ("-sL".ljust(5),": List Scan - simply list targets to scan"),
-        ("-sn".ljust(5),": Ping Scan - disable port scan"),
+        #("-sL".ljust(5),": List Scan - simply list targets to scan"),
+        #("-sn".ljust(5),": Ping Scan - disable port scan"),
         ("-Pn".ljust(5),": Treat all hosts as online -- skip host discovery"),
         ("-PS".ljust(5),": TCP SYN"),
         ("-PA".ljust(5),": TCP ACK"),
@@ -534,14 +534,15 @@ ARGS_LIST = [
         ("-sS".ljust(5),": TCP SYN"),
         ("-sT".ljust(5),": Connect()"),
         ("-sA".ljust(5),": ACK"),
-        ("-sW".ljust(5),": Window"),
+        #("-sW".ljust(5),": Window"),
         ("-sU".ljust(5),": UDP Scan"),
         ("-sN".ljust(5),": TCP Null"),
         ("-sF".ljust(5),": FIN"),
-        ("-sX".ljust(5),": Xmas scans"),
+        #("-sX".ljust(5),": Xmas scans"),
         ("-O".ljust(5),": Enable OS detection"),
         ("-vv".ljust(5),": Verbose output"),
-        ("-p".ljust(5),": <port ranges>: Only scan specified ports. Specify on next screen"),
+        ## Keep the next 2 lines in that order
+        ("-p".ljust(5),": <port ranges>: Specify ports on next screen"),
         ("Finished selecting arguments",)
     ]
 def get_ports():
@@ -605,7 +606,7 @@ def select_arguments():
             ARGS_LIST,
             ARGS_LIST_START_ROW,
             ARGS_LIST_START_COL+5,
-            ARGS_LIST_MAX_HEIGHT,
+            len(ARGS_LIST)+2,
             ARGS_LIST_MAX_WIDTH,
             True,
             True,
@@ -618,17 +619,18 @@ def select_arguments():
         if selection < len(ARGS_LIST)-1:
             # Toggle value of selected flag
             selected_arg_list[selection] = not selected_arg_list[selection]
-            # Reset print_list with updated "Yes" for selected and "No" for not selected
+             # Reset print_select_list with updated "Yes" / "No" for not choices
             print_select_list.clear()
             for selected in selected_arg_list:
                 if selected:
                     print_select_list.append(("Yes",))
                 else:
                     print_select_list.append(("No",))
-            # Add a line for the Finish line in ARGS_LIST
-            print_select_list.append(("",))
+                # Add a line for the Finish line in ARGS_LIST
+            print_select_list.append(("-",))
+    # You should get here when you selected the last line        
     if selected_arg_list[-1]:
-        # If selected the last arguement "-p" then go through this extra menu
+        # If the last argument in list is selected ("-p") then go through this extra section
         #Enter a list or range of ports
         misc_tools.clear_screen()
         if len(_port_str) > 0:
@@ -781,16 +783,17 @@ def args_menu():
 
 def scan_host(host,in_ports, in_arguments):
     """ Scanning host with arguments, returning the scan result"""
-    set_status_msg(f"Scanning ports {in_ports} {host} with {in_arguments} as arguments.")
+    set_status_msg(f"Scanning ports: {in_ports} at host: {host} with {in_arguments} as arguments.")
     print_status_msg(5)
+    global _scan_saved
     try:
         if misc_tools.is_windows():
             nm = nmap.PortScanner(nmap_search_path= [r"C:\Program Files (x86)\Nmap\nmap.exe",])
         else:
             nm = nmap.PortScanner()
         nm.scan(hosts=host, arguments=in_arguments+in_ports)
-    except:
-        set_status_msg(f"Scan of {host} has failed. Arguments {in_arguments} and ports {in_ports}")
+    except nmap.PortScannerError():
+        set_status_msg(f"Scan of {host} has failed. Arguments: {in_arguments} Ports: {in_ports}")
         print_status_msg(5)
     else:
         set_status_msg(f"Scan of {host} is done. Arguments{in_arguments} and ports{in_ports}")
@@ -802,11 +805,12 @@ def scan_host(host,in_ports, in_arguments):
                 "addresses":{"ipv4" : f"{host.split("/")[0]}"},
                 "status": {"state": "failed scan"}
             }
+            _scan_results.append(result)
+            _scan_saved = False
         else:
             for scanned_host in all_hosts:
                 result = nm[scanned_host]
                 _scan_results.append(result)
-                global _scan_saved
                 _scan_saved = False
 
 def scan():

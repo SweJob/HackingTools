@@ -218,6 +218,7 @@ def output_window(
                     key_pressed = "OTHER"
             else:
                 # Key handling in not-windows
+                nav = misc_tools.get_key()
                 if nav == "\\x1b":
                     sec_nav = misc_tools.get_key()
                     key_pressed==""           

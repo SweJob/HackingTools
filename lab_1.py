@@ -199,43 +199,73 @@ def output_window(
             set_status_msg(msg)
             print_status_msg()
             misc_tools.pos_print(start_row+selected_line,start_col+1,"")
-            nav = misc_tools.get_key(False)
-            if nav == "\\xe0":
-                sec_nav = misc_tools.get_key(False)
-                # set_status_msg(f"{nav} + {sec_nav} was pressed")
-                # print_status_msg(1)
-                if sec_nav == "H":
-                    # arrow up
-                    if select_list:
-                        # if it's a selectable list
-                        if selected_line == 0:
-                            # at top of window
-                            row_counter -=1
-                            row_counter = max(row_counter,0)
-                        else:
-                            # move up in window
-                            selected_line -=1
-                            selected_line = max(selected_line,0)
+            if misc_tools.is_windows():
+                nav = misc_tools.get_key()
+                if nav == "\\xe0":
+                    sec_nav = misc_tools.get_key()
+                    key_pressed = ""           
+                    if sec_nav == "H":
+                        key_pressed = "UP"
+                    elif sec_nav == "P":
+                        key_pressed = "DOWN"
                     else:
-                        # move up
+                        key_pressed = "OTHER"
+                elif nav == "\\r":
+                    key_pressed = "ENTER"
+                elif nav == " ":
+                    key_pressed = "SPACE"
+                else:
+                    key_pressed = "OTHER"
+            else:
+                # Key handling in not-windows
+                if nav == "\\x1b":
+                    sec_nav = misc_tools.get_key()
+                    key_pressed==""           
+                    if sec_nav == "A":
+                        key_pressed = "UP"
+                    elif sec_nav == "B":
+                        key_pressed = "DOWN"
+                    else:
+                        key_pressed = "OTHER"
+                elif nav == "\\r":
+                    key_pressed = "ENTER"
+                elif nav == " ":
+                    key_pressed = "SPACE"
+                else:
+                    key_pressed = "OTHER"
+
+            if key_pressed == "UP":
+                # arrow up
+                if select_list:
+                    # if it's a selectable list
+                    if selected_line == 0:
+                        # at top of window
                         row_counter -=1
                         row_counter = max(row_counter,0)
-                elif sec_nav == "P":
-                    # arrow down
-                    if select_list:
-                        if selected_line == max_height-3:
-                            # at bottom of window
-                            row_counter +=1
-                            row_counter =min(row_counter, real_lines-(max_height-2))
-                        else:
-                            # move down in window
-                            selected_line +=1
-                            selected_line = min(selected_line,real_lines-row_counter-1, max_height-3)
                     else:
-                        # move down
+                        # move up in window
+                        selected_line -=1
+                        selected_line = max(selected_line,0)
+                else:
+                    # move up
+                    row_counter -=1
+                    row_counter = max(row_counter,0)
+            elif key_pressed == "DOWN":
+                # arrow down
+                if select_list:
+                    if selected_line == max_height-3:
+                        # at bottom of window
                         row_counter +=1
-                        row_counter =min(row_counter, len(text_list)-(max_height-2))
-            elif nav in (" ","\\r") and select_list:
+                        row_counter =min(row_counter, real_lines-(max_height-2))
+                    else:
+                        # move down in window
+                        selected_line +=1
+                        selected_line = min(selected_line,real_lines-row_counter-1, max_height-3)
+                else:
+                    # move down
+                    row_counter +=1
+                    row_counter =min(row_counter, len(text_list)-(max_height-2))
+            elif key_pressed in ("SPACE","ENTER") and select_list:
                 # Space or Enter
                 return row_counter+selected_line, selected_line
             else:

@@ -73,7 +73,7 @@ def get_key(mode=0,catch_break=True):
     Grabs key pressed and returns key as a string
     If not alphabetical or numerical value, escape code is returned,
     ex: \t for tab, \r for return
-    Ctrl-C is separatly handled and runs the stop_program() function,
+    Ctrl-C is separatly handled if catch_break and runs the stop_program() function,
     """
     if mode==0:
         key_pressed = getkey.getkey().strip("b'")
@@ -83,28 +83,20 @@ def get_key(mode=0,catch_break=True):
         return key_pressed
     elif mode==9:
         # Return raw value, used for testing
-        key_pressed = getkey.getkey()
+        key_pressed = str(getkey.getkey())
         if catch_break and key_pressed .strip("b'")== "\\x03":
             stop_program()
         return key_pressed
 
-    
-    
-
 def get_terminal_width():
-    """ 
-    Returns width of terminal in columns
-    """
+    """ Returns width of terminal in columns """
     terminal_size=os.get_terminal_size()
     return terminal_size.columns
 
 def get_terminal_height():
-    """ 
-    Returns height of terminal in lines
-    """
+    """ Returns height of terminal in lines """
     terminal_size=os.get_terminal_size()
     return terminal_size.lines
-
 
 # def resize_term(lines,columns):
 #     """

@@ -217,7 +217,7 @@ def output_window(
                 else:
                     key_pressed = "OTHER"
             else:
-                # Key handling in not-windows
+                # Key handling in not-windows, FIXME: Arrows and Enter not correctly handled
                 nav = misc_tools.get_key()
                 if nav == "\\x1b":
                     sec_nav = misc_tools.get_key()
@@ -228,7 +228,7 @@ def output_window(
                         key_pressed = "DOWN"
                     else:
                         key_pressed = "OTHER"
-                elif nav == "\\r":
+                elif nav == "\\r": # FIXME: This is not correct for Enter
                     key_pressed = "ENTER"
                 elif nav == " ":
                     key_pressed = "SPACE"

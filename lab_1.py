@@ -228,9 +228,9 @@ def output_window(
                         key_pressed = "DOWN"
                     else:
                         key_pressed = "OTHER"
-                elif nav == "\\r": # FIXME: This is not correct for Enter
+                elif nav[0] == "\n":
                     key_pressed = "ENTER"
-                elif nav == " ":
+                elif nav[0] == " ":
                     key_pressed = "SPACE"
                 else:
                     key_pressed = "OTHER"

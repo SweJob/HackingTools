@@ -43,4 +43,4 @@ HackingTools Lab_1 is using other external libraries:
 - colorama 0.4.6 - https://pypi.org/project/colorama/ - to play with colors on the screen
 - pathvalidate 3.2.1 - https://pypi.org/project/pathvalidate/ - to work with files
 
-## This text was made with dillinger.io
+### This text was made with dillinger.io

@@ -788,7 +788,8 @@ def args_menu():
 def scan_host(host,in_ports, in_arguments):
     """ Scanning host with arguments, returning the scan result"""
     set_status_msg(f"Scanning ports: {in_ports} at host: {host} with {in_arguments} as arguments.")
-    print_status_msg(5)
+    print_status_msg(2)
+    breakpoint()
     global _scan_saved
     try:
         if misc_tools.is_windows():
@@ -798,10 +799,10 @@ def scan_host(host,in_ports, in_arguments):
         nm.scan(hosts=host, arguments=in_arguments+in_ports)
     except nmap.PortScannerError():
         set_status_msg(f"Scan of {host} has failed. Arguments: {in_arguments} Ports: {in_ports}")
-        print_status_msg(5)
+        print_status_msg(2)
     else:
         set_status_msg(f"Scan of {host} is done. Arguments{in_arguments} and ports{in_ports}")
-        print_status_msg(5)
+        print_status_msg(2)
         all_hosts = nm.all_hosts()
         if len(all_hosts) < 1:
             result = {

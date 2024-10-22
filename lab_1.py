@@ -481,6 +481,7 @@ def load_ip_file(file_name):
     except Exception as e:
         set_status_msg(f"Error {e} when reading IP-adresses from {file_name}")
         print_status_msg(3)
+        
 def load_ip_addresses():
     """ 
     Dialogue to load list of IP adressess from a file

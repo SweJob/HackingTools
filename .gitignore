@@ -1,6 +1,6 @@
 /.vscode/
 lib64
-__pycahce_/
+__pycache_/
 include/
 bin/
 lib/
